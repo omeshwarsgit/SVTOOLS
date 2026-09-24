@@ -1,0 +1,101 @@
+﻿Reservation_ID,Vendor_Booking_ID,Guest_Name,Channel,SU_Status,PMS_Status,Admin_Status,Property_ID,Property_Name,Assigned_Representative,Target_Portal_URL,Check_In,Check_Out,Match_Type,Notes
+5796554349,,Singh Paramveer,B.com,Cancelled,,-,4211,Pearl of the Dunes,Unassigned,https://www.booking.com/hotel/in/stayvista-at-pearl-of-the-dunes.html,2026-11-08,2026-11-08,None,Admin: -
+6413053657,,Singh Mareek,B.com,Confirmed,,-,3205,Golden Lark,Unassigned,https://www.booking.com/hotel/in/stayvista-at-silver-slopes.html,2026-10-27,2026-11-26,None,Admin: -
+6590058699,,Mehta Sunil,B.com,Confirmed,,-,3205,Golden Lark,Unassigned,https://www.booking.com/hotel/in/stayvista-at-silver-slopes.html,2026-12-31,2026-12-31,None,Admin: -
+6702738452,,Mehta Sunil,B.com,Confirmed,,-,3205,Golden Lark,Unassigned,https://www.booking.com/hotel/in/stayvista-at-silver-slopes.html,2026-11-15,2026-11-15,None,Admin: -
+6811119097,,Mehta Sunil,B.com,Confirmed,,-,3205,Golden Lark,Unassigned,https://www.booking.com/hotel/in/stayvista-at-silver-slopes.html,2026-11-16,2026-11-16,None,Admin: -
+6453630677,,Soan Dr. Deepak,B.com,Modified,,-,3205,Golden Lark,Unassigned,https://www.booking.com/hotel/in/stayvista-at-silver-slopes.html,2026-12-19,2026-12-19,None,Admin: -
+6320950803,,Narayan-Ram Maureen,B.com,Cancelled,,-,1320,Udaikot,Heena,https://www.booking.com/hotel/in/udaikot-by-vista-rooms.html,2026-12-29,2026-12-31,None,Admin: -
+5010481779,,Shanuja Balakumaran,B.com,Cancelled,,-,1591,Springhills Villa & Ayurvedic Spa,Shital,https://www.booking.com/hotel/in/springhills-villa-amp-ayurvedic-spa-by-vista-rooms.html,2026-11-09,2026-11-29,None,Admin: -
+6027574118,,Nair Gouri,B.com,Cancelled,,-,3390,The Ganga House,Giftson,https://www.booking.com/hotel/in/stayvista-at-the-ganga-house.html,2026-12-12,2026-12-12,None,Admin: -
+6830812975,,K Tushar,B.com,Confirmed,,-,3205,Golden Lark,Unassigned,https://www.booking.com/hotel/in/stayvista-at-silver-slopes.html,2026-12-31,2026-12-31,None,Admin: -
+6886963434,,Desai Aatman,B.com,Cancelled,,-,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2026-12-11,2026-12-12,None,Admin: -
+5741664619,,Lalchandani Ranjit,B.com,Modified,,-,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2027-01-11,2027-01-13,None,Admin: -
+5258762521,,Binder Clemens,B.com,Confirmed,,-,5286,Sirmour Bagh,Unassigned,https://www.booking.com/hotel/in/sirmour-baag-cottages.html,2026-11-05,2026-11-05,None,Admin: -
+6735370536,,זעפרני עודד,B.com,Cancelled,,-,3474,Rooh - Bir,Unassigned,https://www.booking.com/hotel/in/stayvista-at-rooh.html,2026-09-27,2026-09-30,None,Admin: -
+6744667181,,זעפרני עודד,B.com,Cancelled,,-,3474,Rooh - Bir,Unassigned,https://www.booking.com/hotel/in/stayvista-at-rooh.html,2026-09-27,2026-09-30,None,Admin: -
+6223581682,,Nayyar Sulabh,B.com,Cancelled,,-,4419,Cliffbourne - 5BR,Unassigned,https://www.booking.com/hotel/in/stayvista-at-woodhouse-story.html,2026-10-01,2026-10-03,None,Admin: -
+5595746476,,Fernando Nishadi,B.com,Cancelled,,-,5234,Verdant Farmstay - 10BR,Unassigned,https://www.booking.com/hotel/in/stayvista-at-verdant.html,2026-09-26,2026-09-27,None,Admin: -
+5873138385,,Salil Mallick,B.com,Cancelled,,-,5020,The Sahib’s Bungalow - 3BR,Unassigned,https://www.booking.com/hotel/in/the-sahib-bungalow.html,2026-10-22,2026-10-24,None,Admin: -
+5773136689,,Chandorkar Suneeta,B.com,Cancelled,,-,5420,Sukoon Nature Retreat - 5BR,Unassigned,not available,2026-11-11,2026-11-12,None,Admin: -
+HM5PNASAS9,,Sonika,Airbnb,R,,-,5201,Rajmahal Bagh,Unassigned,https://www.airbnb.com/rooms/1581879615182122783,2026-12-22,2026-12-29,None,Admin: -
+5588374810,,Narayana Girish Bants,B.com,Cancelled,,-,5662,Property #5662,Unassigned,not available,2026-10-22,2026-10-24,None,Admin: -
+6077210814,,Narayana Girish Bants,B.com,Cancelled,,-,5662,Property #5662,Unassigned,not available,2026-10-23,2026-10-26,None,Admin: -
+5709550575,,Narayana Girish Bants,B.com,Cancelled,,-,5662,Property #5662,Unassigned,not available,2026-10-23,2026-10-26,None,Admin: -
+5463490669,,Rathi Tushar,B.com,Cancelled,,-,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2026-10-13,2026-10-16,None,Admin: -
+5584871814,,singhi Rajesh,B.com,Cancelled,,-,5498,Property #5498,Unassigned,not available,2026-10-02,2026-10-03,None,Admin: -
+HMB4HXF5ZK,,Chloe,Airbnb,R,,-,5471,Ekagra - 4BR,Unassigned,https://www.airbnb.com/rooms/1648315041986419222,2026-11-17,2026-11-29,None,Admin: -
+5895794972,,Krishna Devendra,B.com,Confirmed,,-,5234,Verdant Farmstay - 10BR,Unassigned,https://www.booking.com/hotel/in/stayvista-at-verdant.html,2026-10-19,2026-10-19,None,Admin: -
+6824324138,,VENKATASUBRAMANIAN M,B.com,Cancelled,,-,5234,Verdant Farmstay - 10BR,Unassigned,https://www.booking.com/hotel/in/stayvista-at-verdant.html,2026-11-20,2026-11-22,None,Admin: -
+6198839096,,Doshi Kinjal,B.com,Confirmed,,-,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2026-11-11,2026-11-14,None,Admin: -
+6620946201,,Harding Mark,B.com,Cancelled,,-,5655,Property #5655,Unassigned,not available,2026-10-03,2026-10-05,None,Admin: -
+6318627723,,Hitesh Barot,B.com,Confirmed,,-,5639,Property #5639,Unassigned,not available,2026-10-04,2026-10-04,None,Admin: -
+6470840666,,Sachdeva Chandni,B.com,Confirmed,,-,5888,Property #5888,Unassigned,not available,2027-02-01,2027-02-01,None,Admin: -
+5938128094,,Singh Kabir,B.com,Confirmed,,-,5888,Property #5888,Unassigned,not available,2026-12-31,2027-01-01,None,Admin: -
+6869554627,,Mittal Alok,B.com,Cancelled,,-,5234,Verdant Farmstay - 10BR,Unassigned,https://www.booking.com/hotel/in/stayvista-at-verdant.html,2026-10-02,2026-10-03,None,Admin: -
+6592233178,,Singh Kabir,B.com,Confirmed,,-,5888,Property #5888,Unassigned,not available,2026-12-30,2027-01-01,None,Admin: -
+5455812809,,CHUNDI MOSES,B.com,Cancelled,,-,691,Villa Sullivan,Unassigned,https://www.booking.com/hotel/in/villa-sullivan-by-vista-rooms-ooty.html,2026-12-03,2026-12-06,None,Admin: -
+HMSSEHDMNY,,Elton,Airbnb,R,,-,5918,Property #5918,Unassigned,not available,2026-12-19,2026-12-20,None,Admin: -
+HM432Y2542,,Ryan,Airbnb,R,,-,5918,Property #5918,Unassigned,not available,2026-12-27,2026-12-30,None,Admin: -
+5276266201,,Rao Archana,B.com,Confirmed,,-,4653,Tarika's Goldshore,Unassigned,https://www.booking.com/hotel/in/stayvista-at-tarikas-goldshore.html,2026-12-19,2026-12-25,None,Admin: -
+6877157061,,Heap Philip,B.com,Confirmed,,-,5759,Property #5759,Unassigned,not available,2027-02-03,2027-02-05,None,Admin: -
+EMT170680169,,Madan Gesu,Others,Confirmed,,-,4760,Executive Room @ StayVista Residences near Cyber City Hub,Unassigned,https://www.stayvista.com/villa/executive-room-at-stayvista-residences-near-cyber-city-hub,2026-09-24,2026-09-24,None,Admin: -
+HMCFBXAH3T,,Ashish,Airbnb,R,,-,5918,Property #5918,Unassigned,not available,2026-12-24,2026-12-26,None,Admin: -
+5098270000,,Ahir Prashant,B.com,Confirmed,,-,5759,Property #5759,Unassigned,not available,2026-11-19,2026-11-22,None,Admin: -
+6253977086,,Seth Mitali,B.com,Cancelled,,-,5918,Property #5918,Unassigned,not available,2026-12-25,2026-12-29,None,Admin: -
+6003640972,,Gupta Shruti,B.com,Confirmed,,-,5800,Property #5800,Unassigned,not available,2026-09-24,2026-09-24,None,Admin: -
+6022125487,,Mukesh Kumar,B.com,Confirmed,,-,5744,Property #5744,Unassigned,not available,2026-09-24,2026-09-24,None,Admin: -
+188158068,NH72178519028150,Jain Shagun,Gommt,Confirmed,,nan,5800,Property #5800,Unassigned,not available,2026-09-26,2026-09-26,None,Admin: nan
+5020893970,,Patil Pournima,B.com,Confirmed,,nan,3638,Rustic Haven,Unassigned,https://www.booking.com/hotel/in/stayvista-at-rustic-haven.html,2026-09-29,2026-09-29,None,Admin: nan
+6989744936,,RAUT ROHAN,B.com,Confirmed,,nan,5104,Impiana,Tanvi,https://www.booking.com/hotel/in/stayvista-at-impiana.html,2026-10-02,2026-10-02,None,Admin: nan
+HM3FXD93PK,,Dubey Avanee,Airbnb,Confirmed,,nan,4274,Ninad Estate,Unassigned,https://www.airbnb.com/rooms/1354178283974397451,2026-10-01,2026-10-01,None,Admin: nan
+5015460795,,Raut Chetan,B.com,Confirmed,,nan,5039,Truntum,Unassigned,https://www.booking.com/hotel/in/stayvista-at-truntum-with-jacuzzi-pool-lawn.html,2026-10-03,2026-10-03,None,Admin: nan
+CT_2609231116795,,MRS Jutur Naga Mythili,Others,Confirmed,,nan,4508,Luma,Unassigned,https://www.stayvista.com/villa/luma,2026-10-01,2026-10-01,None,Admin: nan
+6064500137,,Gowda Krushik,B.com,Confirmed,,nan,2949,Ava - The Country House,Unassigned,https://www.booking.com/hotel/in/stayvista-at-ava-the-country-house.html,2026-09-26,2026-09-26,None,Admin: nan
+HMKPJ2R84M,,Padyal Gauri,Airbnb,Confirmed,,nan,2342,Property #2342,Unassigned,not available,2026-09-28,2026-09-28,None,Admin: nan
+5670229324,,Kumar Sunny,B.com,Confirmed,,nan,5786,Property #5786,Unassigned,not available,2026-09-24,2026-09-24,None,Admin: nan
+188172323,NH96237519068794,Sharma Akansha,Gommt,Confirmed,,nan,3353,Celeste Villa,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202402211214572626&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000514957,2026-10-02,2026-10-02,None,Admin: nan
+HM48F2Q88M,,Sharma Kanika,Airbnb,Confirmed,,nan,3143,Mystic Castle,Keshav,https://www.airbnb.com/rooms/1336096004918852605,2026-09-24,2026-09-24,None,Admin: nan
+2052753372,,Khanna Manan,Agoda,Confirmed,,nan,4760,Executive Room @ StayVista Residences near Cyber City Hub,Unassigned,https://www.agoda.com/en-gb/stayvista-residences-dlf/hotel/new-delhi-and-ncr-in.html,2026-09-24,2026-09-25,None,Admin: nan
+5020803693,,kumaran bharath,B.com,Confirmed,,nan,4377,Arvind Chari,Sharon,https://www.booking.com/hotel/in/stayvista-at-under-the-stars-with-views-glasshouse.html,2026-09-26,2026-09-26,None,Admin: nan
+6989760501,,Sakshi Singhal,B.com,Confirmed,,nan,2791,Sarion Cottage,Darshana,not available,2026-10-02,2026-10-03,None,Admin: nan
+2052764577,,Gowda Tej s,Agoda,Confirmed,,nan,3018,The Goldilocks,Unassigned,https://www.agoda.com/en-in/en-in/stayvista-at-pine-chalet/hotel/bangalore-in.html,2026-09-28,2026-09-28,None,Admin: nan
+2052765710,,Sud Sanika,Agoda,Confirmed,,nan,4807,The Clay Courtyard,Unassigned,https://www.agoda.com/en-in/en-in/m-a-mayamma/hotel/chikkaballapura-in.html,2026-10-02,2026-10-03,None,Admin: nan
+188177228,NH26237519081652,Kulkarni Mayur,Gommt,Cancelled,,nan,4274,Ninad Estate,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202502071234115682&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000619074,2026-09-30,2026-09-30,None,Admin: nan
+188178266,NH23113519084462,Kulkarni Mayur,Gommt,Confirmed,,nan,4274,Ninad Estate,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202502071234115682&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000619074,2026-09-30,2026-09-30,None,Admin: nan
+HMZCN445BR,,Malhotra Gautam,Airbnb,Confirmed,,nan,4719,The Fig Tree Villa,Unassigned,https://www.airbnb.com/rooms/1429413494036596693,2026-10-02,2026-10-03,None,Admin: nan
+188182470,NH78101519095610,Chetiyar Sagar,Gommt,Confirmed,,nan,1731,Arihant villa,Shital,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202108192255566874&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000354857,2026-09-25,2026-09-26,None,Admin: nan
+5670293575,,TYAGI ABHIMANYU,B.com,Confirmed,,nan,5759,Property #5759,Unassigned,not available,2026-10-16,2026-10-16,None,Admin: nan
+188166484,GH29150278125460,Mohit Mohit,Gommt,Cancelled,,nan,5405,Property #5405,Unassigned,not available,2026-09-26,2026-09-26,None,Admin: nan
+HMWMYNRH9X,,Parekh Akash,Airbnb,Confirmed,,nan,3350,Terra Tints,Unassigned,https://www.airbnb.com/rooms/1385289006384180360,2026-10-03,2026-10-04,None,Admin: nan
+6689424489,,poojary nabha,B.com,Confirmed,,nan,5888,Property #5888,Unassigned,not available,2026-09-24,2026-09-24,None,Admin: nan
+188188309,GH29150278141394,Sharma Vishal,Gommt,Confirmed,,nan,5786,Property #5786,Unassigned,not available,2026-10-20,2026-10-21,None,Admin: nan
+188188414,NH94221519113376,Bains Atul,Gommt,Confirmed,,nan,5786,Property #5786,Unassigned,not available,2026-10-10,2026-10-10,None,Admin: nan
+6202930885,,Gonsalves Salome,B.com,Confirmed,,nan,5405,Property #5405,Unassigned,not available,2026-11-10,2026-11-12,None,Admin: nan
+188189536,NH78101519116766,Jain Neha,Gommt,Confirmed,,nan,4393,tatvam,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202505021416508928&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000644139,2026-09-29,2026-09-29,None,Admin: nan
+2052800954,,Utreja Naman,Agoda,Confirmed,,nan,4764,Dream Haus,Unassigned,https://www.agoda.com/en-gb/stayvista-at-dream-haus/hotel/kasauli-in.html,2026-10-02,2026-10-03,None,Admin: nan
+188191511,NH73113519121624,Sharma Priteish,Gommt,Confirmed,,nan,2748,Villa Vivendi,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202308181453196796&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000479930,2026-09-27,2026-09-27,None,Admin: nan
+HMDFBSFYQM,,R Shrinidhi,Airbnb,Confirmed,,nan,5737,Property #5737,Unassigned,not available,2026-10-06,2026-10-06,None,Admin: nan
+2052809090,,Madhavan Karthick,Agoda,Confirmed,,nan,5042,Kuhu Resort - 18BR,Unassigned,not available,2026-10-17,2026-10-19,None,Admin: nan
+188193803,GH29150278145584,Shankha Das Shubhra,Gommt,Confirmed,,nan,5636,Deluxe Rooms @ Rivanta by StayVista Residences,Unassigned,not available,2026-09-25,2026-09-25,None,Admin: nan
+2052810962,,More Sai,Agoda,Confirmed,,nan,5042,Kuhu Resort - 18BR,Unassigned,not available,2026-10-08,2026-10-12,None,Admin: nan
+5020877164,,Rane Unnati,B.com,Confirmed,,nan,5405,Property #5405,Unassigned,not available,2026-09-25,2026-09-26,None,Admin: nan
+188194632,NH76221519132046,Shirsath Subhash,Gommt,Confirmed,,nan,5405,Property #5405,Unassigned,not available,2026-09-27,2026-09-28,None,Admin: nan
+HMKA4SFSQH,,Reddy Archana,Airbnb,Confirmed,,nan,3234,The Big Chill,Unassigned,https://www.airbnb.com/rooms/1059121442575299927,2026-10-02,2026-10-03,None,Admin: nan
+HMEAX3WN2N,,Dave Kunal,Airbnb,Confirmed,,nan,5366,Khaybar Villa,Unassigned,https://www.airbnb.com/rooms/1631923405694264506,2026-10-02,2026-10-03,None,Admin: nan
+5476795860,,Thangavel Girithar,B.com,Confirmed,,nan,3102,Nature’s Nook,Unassigned,https://www.booking.com/hotel/in/stayvista-at-nirved-villa.html,2026-10-02,2026-10-03,None,Admin: nan
+HMJM9KNJTF,,Kumar Shubham,Airbnb,Confirmed,,nan,2334,Stars By The Bay,Unassigned,https://www.airbnb.com/rooms/1175670217388835336,2026-09-24,2026-09-24,None,Admin: nan
+188201298,NH73113519151880,Patca Zubeda,Gommt,Confirmed,,nan,4508,Luma,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202510011626459116&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000689148,2026-09-25,2026-09-25,None,Admin: nan
+188201981,GH25167278152380,Kore Netravathi,Gommt,Confirmed,,nan,2932,River Song,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202310052035411887&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000488043,2026-09-26,2026-09-26,None,Admin: nan
+HMNBHPFSFZ,,Said Ibrahim,Airbnb,Confirmed,,nan,5415,Villa Rumjhum,Sharon,https://www.airbnb.com/rooms/1630215302447987902,2026-11-25,2026-11-28,None,Admin: nan
+5029621592,,Ahmed khan Asaf,B.com,Confirmed,,nan,5286,Sirmour Bagh,Unassigned,https://www.booking.com/hotel/in/sirmour-baag-cottages.html,2026-09-27,2026-09-27,None,Admin: nan
+5819431295,,Bal Ruchika,B.com,Confirmed,,nan,5018,Risacca - Amer,Unassigned,not available,2026-10-02,2026-10-03,None,Admin: nan
+5449330993,,Anand Megha,B.com,Confirmed,,nan,5018,Risacca - Amer,Unassigned,not available,2026-10-02,2026-10-03,None,Admin: nan
+5476763830,,NARRA VARUN,B.com,Confirmed,,nan,5888,Property #5888,Unassigned,not available,2026-09-30,2026-09-30,None,Admin: nan
+HMNNZWBFSH,,Shinde Piyush,Airbnb,Confirmed,,nan,32,white pebbles,Nirmala,https://www.airbnb.com/rooms/35888516,2026-09-26,2026-09-26,None,Admin: nan
+HMBAQ2QJMW,,Pathare Surabhi,Airbnb,Confirmed,,nan,5737,Property #5737,Unassigned,not available,2026-09-26,2026-09-27,None,Admin: nan
+2052837537,,Raina Anil Kumar,Agoda,Confirmed,,nan,4760,Executive Room @ StayVista Residences near Cyber City Hub,Unassigned,https://www.agoda.com/en-gb/stayvista-residences-dlf/hotel/new-delhi-and-ncr-in.html,2026-10-12,2026-10-14,None,Admin: nan
+2052852113,,Sundaram Gowtham,Agoda,Confirmed,,nan,3401,Own The Beach Life,Unassigned,"StayVista at The Beach Life, Thriprayar, India - Photos, Room Rates & Promotions",2026-10-01,2026-10-01,None,Admin: nan
+188209260,NH73008519179492,Mahajan sawan,Gommt,Confirmed,,nan,2087,Tarika's Seascapes,Unassigned,https://www.makemytrip.com/hotels/hotel-details/?hotelId=202205231332005552&_uCurrency=INR&checkin=11252025&checkout=11262025&city=CTAGR&country=IN&funnelType=getaway&lat=27.16779&lng=78.04893&locusId=ZNDEL67F7E280&locusType=zone&rank=1&roomStayQualifier=2e0e&seekSummaryRequired=false&viewType=LUXE&mtkeys=defaultMtkey1000396838,2026-09-24,2026-09-24,None,Admin: nan
+HM8AB3KES2,,Gummadi Usha Bhavana,Airbnb,Confirmed,,nan,5487,Weather Vane- Sea Facing Villa in Varkala,Unassigned,https://www.airbnb.com/rooms/1651351567999187543,2026-09-27,2026-09-27,None,Admin: nan
+188210877,GH79150278161836,Bisht Dolly,Gommt,Confirmed,,nan,5786,Property #5786,Unassigned,not available,2026-10-01,2026-10-01,None,Admin: nan

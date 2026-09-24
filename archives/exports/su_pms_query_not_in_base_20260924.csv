@@ -1,0 +1,50 @@
+﻿Reservation_ID,Vendor_Booking_ID,Guest_Name,Channel,SU_Status,PMS_Status,Admin_Status,Property_ID,Property_Name,Assigned_Representative,Target_Portal_URL,Check_In,Check_Out,Match_Type,Notes
+1483489,1483489,Query Guest,B.com,,notconverted,,5800,Property #5800,Unassigned,not available,2026-09-24,2026-09-25,Query Dump,Query record missing from Base Dump
+1483493,1483493,Query Guest,B.com,,notconverted,,5744,Property #5744,Unassigned,not available,2026-09-24,2026-09-25,Query Dump,Query record missing from Base Dump
+1483924,1483924,Query Guest,B.com,,open,,5786,Property #5786,Unassigned,not available,2026-09-24,2026-09-25,Query Dump,Query record missing from Base Dump
+1484091,1484091,Query Guest,B.com,,converted,,5888,Property #5888,Unassigned,not available,2026-09-24,2026-09-25,Query Dump,Query record missing from Base Dump
+1484196,1484196,Query Guest,B.com,,converted,,5402,Property #5402,Unassigned,not available,2026-09-25,2026-09-27,Query Dump,Query record missing from Base Dump
+1483827,1483827,Query Guest,B.com,,converted,,2949,Ava - The Country House,Unassigned,https://www.booking.com/hotel/in/stayvista-at-ava-the-country-house.html,2026-09-26,2026-09-27,Query Dump,Query record missing from Base Dump
+1483987,1483987,Query Guest,B.com,,converted,,4684,Property #4684,Unassigned,not available,2026-09-26,2026-09-27,Query Dump,Query record missing from Base Dump
+1347798,1347798,Query Guest,B.com,,notconverted,,3474,Rooh - Bir,Unassigned,https://www.booking.com/hotel/in/stayvista-at-rooh.html,2026-09-27,2026-10-01,Query Dump,Query record missing from Base Dump
+1347814,1347814,Query Guest,B.com,,notconverted,,3474,Rooh - Bir,Unassigned,https://www.booking.com/hotel/in/stayvista-at-rooh.html,2026-09-27,2026-10-01,Query Dump,Query record missing from Base Dump
+1483808,1483808,Query Guest,B.com,,converted,,3881,Property #3881,Unassigned,not available,2026-09-29,2026-09-30,Query Dump,Query record missing from Base Dump
+1484284,1484284,Query Guest,B.com,,converted,,5888,Property #5888,Unassigned,not available,2026-09-30,2026-10-01,Query Dump,Query record missing from Base Dump
+1357247,1357247,Query Guest,B.com,,notconverted,,4419,Cliffbourne - 5BR,Unassigned,https://www.booking.com/hotel/in/stayvista-at-woodhouse-story.html,2026-10-01,2026-10-04,Query Dump,Query record missing from Base Dump
+1440827,1440827,Query Guest,B.com,,notconverted,,5498,Property #5498,Unassigned,not available,2026-10-02,2026-10-04,Query Dump,Query record missing from Base Dump
+1483813,1483813,Query Guest,B.com,,converted,,5126,Property #5126,Unassigned,not available,2026-10-02,2026-10-03,Query Dump,Query record missing from Base Dump
+1484014,1484014,Query Guest,B.com,,converted,,659,Property #659,Unassigned,not available,2026-10-02,2026-10-04,Query Dump,Query record missing from Base Dump
+1484221,1484221,Query Guest,B.com,,converted,,3102,Nature’s Nook,Unassigned,https://www.booking.com/hotel/in/stayvista-at-nirved-villa.html,2026-10-02,2026-10-04,Query Dump,Query record missing from Base Dump
+1484277,1484277,Query Guest,B.com,,converted,,5133,Property #5133,Unassigned,not available,2026-10-02,2026-10-04,Query Dump,Query record missing from Base Dump
+1484450,1484450,Query Guest,B.com,,converted,,3576,Property #3576,Unassigned,not available,2026-10-02,2026-10-04,Query Dump,Query record missing from Base Dump
+1441874,1441874,Query Guest,B.com,,notconverted,,5655,Property #5655,Unassigned,not available,2026-10-03,2026-10-06,Query Dump,Query record missing from Base Dump
+1460186,1460186,Query Guest,B.com,,suspended,,5639,Property #5639,Unassigned,not available,2026-10-04,2026-10-05,Query Dump,Query record missing from Base Dump
+1439807,1439807,Query Guest,B.com,,notconverted,,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2026-10-13,2026-10-17,Query Dump,Query record missing from Base Dump
+1484077,1484077,Query Guest,B.com,,followup,,5879,Property #5879,Unassigned,not available,2026-10-16,2026-10-17,Query Dump,Query record missing from Base Dump
+1391899,1391899,Query Guest,B.com,,notconverted,,5020,The Sahib’s Bungalow - 3BR,Unassigned,https://www.booking.com/hotel/in/the-sahib-bungalow.html,2026-10-22,2026-10-25,Query Dump,Query record missing from Base Dump
+1436466,1436466,Query Guest,B.com,,notconverted,,5729,Property #5729,Unassigned,not available,2026-10-22,2026-10-25,Query Dump,Query record missing from Base Dump
+1196471,1196471,Query Guest,B.com,,notconverted,,4762,Property #4762,Unassigned,not available,2026-10-27,2026-11-27,Query Dump,Query record missing from Base Dump
+1231868,1231868,Query Guest,B.com,,notconverted,,5283,Property #5283,Unassigned,not available,2026-11-05,2026-11-06,Query Dump,Query record missing from Base Dump
+1107201,1107201,Query Guest,B.com,,cancelled,,4211,Pearl of the Dunes,Unassigned,https://www.booking.com/hotel/in/stayvista-at-pearl-of-the-dunes.html,2026-11-08,2026-11-09,Query Dump,Query record missing from Base Dump
+1187369,1187369,Query Guest,B.com,,cancelled,,1591,Springhills Villa & Ayurvedic Spa,Shital,https://www.booking.com/hotel/in/springhills-villa-amp-ayurvedic-spa-by-vista-rooms.html,2026-11-09,2026-11-30,Query Dump,Query record missing from Base Dump
+1484130,1484130,Query Guest,B.com,,converted,,5399,Property #5399,Unassigned,not available,2026-11-10,2026-11-13,Query Dump,Query record missing from Base Dump
+1427786,1427786,Query Guest,B.com,,notconverted,,5628,Property #5628,Unassigned,not available,2026-11-11,2026-11-13,Query Dump,Query record missing from Base Dump
+1454649,1454649,Query Guest,B.com,,notconverted,,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2026-11-11,2026-11-15,Query Dump,Query record missing from Base Dump
+1216840,1216840,Query Guest,B.com,,notconverted,,4762,Property #4762,Unassigned,not available,2026-11-15,2026-11-16,Query Dump,Query record missing from Base Dump
+1216842,1216842,Query Guest,B.com,,notconverted,,4762,Property #4762,Unassigned,not available,2026-11-16,2026-11-17,Query Dump,Query record missing from Base Dump
+1478423,1478423,Query Guest,B.com,,notconverted,,5878,Property #5878,Unassigned,not available,2026-11-19,2026-11-23,Query Dump,Query record missing from Base Dump
+1453811,1453811,Query Guest,B.com,,notconverted,,5347,Property #5347,Unassigned,not available,2026-11-20,2026-11-23,Query Dump,Query record missing from Base Dump
+1453812,1453812,Query Guest,B.com,,notconverted,,5346,Property #5346,Unassigned,not available,2026-11-20,2026-11-23,Query Dump,Query record missing from Base Dump
+1453813,1453813,Query Guest,B.com,,notconverted,,5345,Property #5345,Unassigned,not available,2026-11-20,2026-11-23,Query Dump,Query record missing from Base Dump
+1224461,1224461,Query Guest,B.com,,notconverted,,691,Villa Sullivan,Unassigned,https://www.booking.com/hotel/in/villa-sullivan-by-vista-rooms-ooty.html,2026-12-03,2026-12-07,Query Dump,Query record missing from Base Dump
+1258013,1258013,Query Guest,B.com,,notconverted,,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2026-12-11,2026-12-13,Query Dump,Query record missing from Base Dump
+1231409,1231409,Query Guest,B.com,,cancelled,,3390,The Ganga House,Giftson,https://www.booking.com/hotel/in/stayvista-at-the-ganga-house.html,2026-12-12,2026-12-13,Query Dump,Query record missing from Base Dump
+1168604,1168604,Query Guest,B.com,,notconverted,,4762,Property #4762,Unassigned,not available,2026-12-19,2026-12-20,Query Dump,Query record missing from Base Dump
+1474206,1474206,Query Guest,B.com,,notconverted,,4653,Tarika's Goldshore,Unassigned,https://www.booking.com/hotel/in/stayvista-at-tarikas-goldshore.html,2026-12-19,2026-12-26,Query Dump,Query record missing from Base Dump
+1472744,1472744,Query Guest,B.com,,notconverted,,5918,Property #5918,Unassigned,not available,2026-12-25,2026-12-30,Query Dump,Query record missing from Base Dump
+1219235,1219235,Query Guest,B.com,,cancelled,,1320,Udaikot,Heena,https://www.booking.com/hotel/in/udaikot-by-vista-rooms.html,2026-12-29,2027-01-01,Query Dump,Query record missing from Base Dump
+1464103,1464103,Query Guest,B.com,,notconverted,,5887,Property #5887,Unassigned,not available,2026-12-30,2027-01-02,Query Dump,Query record missing from Base Dump
+1463753,1463753,Query Guest,B.com,,notconverted,,5887,Property #5887,Unassigned,not available,2026-12-31,2027-01-02,Query Dump,Query record missing from Base Dump
+1282105,1282105,Query Guest,B.com,,notconverted,,4780,Roze Home,Unassigned,https://www.booking.com/hotel/in/stayvista-at-roze-home.html,2027-01-06,2027-01-09,Query Dump,Query record missing from Base Dump
+1463309,1463309,Query Guest,B.com,,notconverted,,5887,Property #5887,Unassigned,not available,2027-02-01,2027-02-02,Query Dump,Query record missing from Base Dump
+1477340,1477340,Query Guest,B.com,,notconverted,,5759,Property #5759,Unassigned,not available,2027-02-03,2027-02-06,Query Dump,Query record missing from Base Dump
