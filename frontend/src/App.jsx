@@ -223,9 +223,9 @@ export default function App() {
         setData(res);
         showToast(`Workspace file '${selectedWorkspaceFile.split('/').pop()}' processed!`);
       } else {
-        const res = await fetchLatestMIS();
+        const res = await fetchLatestMIS(true);
         setData(res);
-        showToast('Latest daily report processed and published!');
+        showToast('Latest daily report re-processed and published!');
       }
     } catch (err) {
       showToast(`Error: ${err.message}`);

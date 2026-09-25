@@ -237,10 +237,10 @@ def download_workspace_file(file_path: str = Query(...)):
 
 
 @router.get("/mis/latest", response_model=MISDashboardData)
-def get_latest_mis(db: Session = Depends(get_db)):
+def get_latest_mis(refresh: bool = Query(False), db: Session = Depends(get_db)):
     """Fetch the latest SU – PMS Booking Reconciliation MIS dataset."""
     global _LATEST_MIS_DATA
-    if _LATEST_MIS_DATA is None:
+    if _LATEST_MIS_DATA is None or refresh:
         su_path = settings.DEFAULT_SU_PATH
         if not os.path.exists(su_path):
             downloads_file = get_user_downloads_dir() / "SU__Cancelled_Bookings.xlsx"
