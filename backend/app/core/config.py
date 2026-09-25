@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "StayVista PMS & OTA Reconciliation Engine"
     API_V1_STR: str = "/api/v1"
     
+    BASE_DIR: Path = BASE_DIR
+    BACKEND_DIR: Path = BACKEND_DIR
+    
     # Database
     DATABASE_URL: str = f"sqlite:///{BACKEND_DIR}/reconciliation.db"
     

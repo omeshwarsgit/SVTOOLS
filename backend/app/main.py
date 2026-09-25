@@ -52,17 +52,23 @@ app.add_middleware(
 # Mount API routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-
-@app.get("/")
-def root():
-    return {
-        "service": settings.PROJECT_NAME,
-        "version": "1.0.0",
-        "docs": "/docs",
-        "api_v1": settings.API_V1_STR,
-    }
+# Serve built frontend in production if dist exists
+dist_dir = settings.BASE_DIR / "frontend" / "dist"
+if dist_dir.exists():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=str(dist_dir), html=True), name="frontend")
+else:
+    @app.get("/")
+    def root():
+        return {
+            "service": settings.PROJECT_NAME,
+            "version": "1.0.0",
+            "docs": "/docs",
+            "api_v1": settings.API_V1_STR,
+        }
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=False)
