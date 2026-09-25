@@ -2,14 +2,15 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   fetchLatestMIS, 
   processMISFiles, 
-  fetchWorkspaceFiles,
-  selectWorkspaceFile,
-  previewWorkspaceFile,
-  openFileInSystem,
-  exportAndOpenInExcel,
-  getWorkspaceFileDownloadUrl,
+  fetchWorkspaceFiles, 
+  selectWorkspaceFile, 
+  previewWorkspaceFile, 
+  openFileInSystem, 
+  exportAndOpenInExcel, 
+  getWorkspaceFileDownloadUrl, 
   getTabExportUrl, 
-  getClaudeExportUrl 
+  getClaudeExportUrl,
+  downloadFileFromUrl 
 } from './services/api';
 import { 
   Search, 
@@ -21,17 +22,21 @@ import {
   X, 
   User, 
   Calendar, 
-  Download,
-  FileSpreadsheet,
-  FolderOpen,
-  ArrowLeft,
-  ArrowRight,
-  Eye,
-  FileText,
-  RefreshCw,
-  FolderKanban,
-  Layers,
-  Sparkles
+  Download, 
+  FileSpreadsheet, 
+  FolderOpen, 
+  ArrowLeft, 
+  ArrowRight, 
+  Eye, 
+  FileText, 
+  RefreshCw, 
+  FolderKanban, 
+  Layers, 
+  Sparkles,
+  Upload,
+  FileUp,
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 
 const TABS = [
@@ -49,6 +54,7 @@ export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [downloading, setDownloading] = useState(null);
   const [activeTab, setActiveTab] = useState('cancellation_pending');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -61,6 +67,11 @@ export default function App() {
   const [copiedSlack, setCopiedSlack] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // File Ingestion Modal States
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [modalSuFile, setModalSuFile] = useState(null);
+  const [modalPmsFile, setModalPmsFile] = useState(null);
+
   // File Navigator & Previewer States
   const [fileNavOpen, setFileNavOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
@@ -68,6 +79,8 @@ export default function App() {
   const [previewSearch, setPreviewSearch] = useState('');
 
   const fileInputRef = useRef(null);
+  const suFileInputRef = useRef(null);
+  const pmsFileInputRef = useRef(null);
 
   const showToast = (msg, actions = null) => {
     setToast({ text: msg, actions });
@@ -115,15 +128,47 @@ export default function App() {
       setSelectedWorkspaceFile('');
       try {
         setUploading(true);
+        showToast(`Ingesting and reconciling ${files.length} file(s)...`);
         const res = await processMISFiles(files);
         setData(res);
-        showToast(`Ingested & reconciled ${files.length} file(s) successfully!`);
+        showToast(`Ingested & reconciled ${files.length} file(s) successfully! (${res.primary_metrics?.total_bookings || 0} bookings)`);
         refreshWorkspaceFilesList();
       } catch (err) {
         showToast(`Upload error: ${err.message}`);
       } finally {
         setUploading(false);
+        if (e.target) e.target.value = '';
       }
+    }
+  };
+
+  // Handle modal submit with SU and/or PMS files
+  const handleModalUploadSubmit = async () => {
+    const filesToUpload = [];
+    if (modalSuFile) filesToUpload.push(modalSuFile);
+    if (modalPmsFile) filesToUpload.push(modalPmsFile);
+
+    if (filesToUpload.length === 0) {
+      showToast('Please select at least one file (SU Report or PMS Report) to ingest.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      showToast(`Ingesting and reconciling ${filesToUpload.length} file(s)...`);
+      const res = await processMISFiles(filesToUpload);
+      setData(res);
+      setSelectedFiles(filesToUpload);
+      setSelectedWorkspaceFile('');
+      setImportModalOpen(false);
+      setModalSuFile(null);
+      setModalPmsFile(null);
+      showToast(`Successfully reconciled ${filesToUpload.length} file(s)! (${res.primary_metrics?.total_bookings || 0} bookings)`);
+      refreshWorkspaceFilesList();
+    } catch (err) {
+      showToast(`Ingestion error: ${err.message}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -193,7 +238,7 @@ export default function App() {
   const handleDirectOpenExcel = async (tabName, format = 'xlsx') => {
     try {
       const res = await exportAndOpenInExcel(tabName, format);
-      showToast(`Opened real ${format.toUpperCase()} spreadsheet in Excel! Saved to ~/Downloads/${res.file_name}`, {
+      showToast(`Saved to Downloads and opened in Excel! (${res.file_name})`, {
         revealFinder: () => handleOpenSystem(res.downloads_path, 'reveal'),
         preview: () => handleOpenFilePreview(res.downloads_path)
       });
@@ -203,30 +248,25 @@ export default function App() {
     }
   };
 
-  // Safe file download helper: triggers native browser attachment download & informs user of real ~/Downloads copy
-  const triggerDownload = (url, defaultFilename) => {
+  // Safe file download helper: streams binary data via Blob & triggers native browser file download
+  const triggerDownload = async (url, defaultFilename) => {
     try {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = defaultFilename;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        refreshWorkspaceFilesList();
-      }, 500);
-
-      const isXlsx = defaultFilename.endsWith('.xlsx');
-      const downloadsPath = `/Users/omeshwarshukla/Downloads/${defaultFilename}`;
-
-      showToast(`Exported real ${isXlsx ? 'Excel (.xlsx)' : 'CSV'} file to ~/Downloads!`, {
-        openMac: () => handleDirectOpenExcel(activeTab, isXlsx ? 'xlsx' : 'csv'),
-        revealFinder: () => handleOpenSystem(downloadsPath, 'reveal'),
-        preview: () => handleOpenFilePreview(downloadsPath)
+      setDownloading(defaultFilename);
+      showToast(`Downloading ${defaultFilename}...`);
+      const savedFilename = await downloadFileFromUrl(url, defaultFilename);
+      showToast(`Downloaded '${savedFilename}' successfully! Saved to your computer.`, {
+        openMac: () => handleDirectOpenExcel(activeTab, savedFilename.endsWith('.xlsx') ? 'xlsx' : 'csv'),
+        preview: () => {
+          const match = workspaceFiles.find(f => f.name === savedFilename);
+          if (match) handleOpenFilePreview(match.path);
+        }
       });
+      refreshWorkspaceFilesList();
     } catch (err) {
-      console.warn('Fallback download via direct window open:', err);
-      window.open(url, '_blank');
+      console.error('Download error:', err);
+      showToast(`Download failed: ${err.message}`);
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -407,14 +447,24 @@ export default function App() {
         {/* Action / File Ingestion Bar */}
         <div className="bg-white border border-slate-200 rounded-md p-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
+            {/* Dedicated Multi-Format Ingest Dialog */}
+            <button
+              onClick={() => setImportModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3.5 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98"
+              title="Open multi-format booking import wizard (Single Workbook or Separate SU + PMS files)"
+            >
+              <FileUp className="h-3.5 w-3.5" />
+              <span>Import Bookings</span>
+            </button>
+
             {/* Native OS File Picker trigger */}
             <label 
               htmlFor="native-file-input" 
-              className="border border-blue-500 text-blue-600 hover:bg-blue-50 text-xs font-normal px-3.5 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 select-none"
-              title="Select local files from Finder/Explorer"
+              className="border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 text-xs font-normal px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 select-none"
+              title="Quick select local files (.xlsx, .xls, .csv)"
             >
-              <FolderOpen className="h-3.5 w-3.5" />
-              <span>Choose file(s)</span>
+              <FolderOpen className="h-3.5 w-3.5 text-slate-500" />
+              <span>Quick Choose</span>
               <input
                 id="native-file-input"
                 type="file"
@@ -582,6 +632,7 @@ export default function App() {
         <div className="border-b border-slate-200 flex items-center flex-wrap gap-x-6 gap-y-2 text-xs font-medium text-slate-600 pt-2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
+            const badgeCount = data?.tab_counts?.[tab.key] ?? (data?.tabs_data?.[tab.key]?.length ?? tab.badge);
             return (
               <button
                 key={tab.key}
@@ -590,15 +641,19 @@ export default function App() {
                   setPage(1);
                   setInspectIndex(null);
                 }}
-                className={`pb-2.5 transition-colors cursor-pointer flex items-center gap-1 ${
+                className={`pb-2.5 transition-colors cursor-pointer flex items-center gap-1.5 ${
                   isActive
                     ? 'text-blue-600 border-b-2 border-blue-600 font-semibold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <span>{tab.label}</span>
-                {tab.badge !== null && (
-                  <span className="text-red-500 font-semibold text-xs ml-0.5">{tab.badge}</span>
+                {badgeCount !== null && (
+                  <span className={`text-[11px] font-semibold px-1.5 py-0.2 rounded-full ${
+                    isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {badgeCount.toLocaleString()}
+                  </span>
                 )}
               </button>
             );
@@ -646,31 +701,45 @@ export default function App() {
             {/* Export Excel (.xlsx) */}
             <button
               onClick={() => triggerDownload(getTabExportUrl(activeTab, 'xlsx'), `su_pms_${activeTab}.xlsx`)}
-              className="border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-medium px-3 py-1 rounded text-xs transition-colors flex items-center gap-1 cursor-pointer"
-              title="Download real Excel workbook (.xlsx) directly to ~/Downloads"
+              disabled={downloading === `su_pms_${activeTab}.xlsx`}
+              className="border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-medium px-3 py-1 rounded text-xs transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              title="Download real Excel workbook (.xlsx) directly to your computer"
             >
-              <Download className="h-3 w-3 text-emerald-600" />
-              <span>Export Excel (.xlsx)</span>
+              <Download className={`h-3 w-3 text-emerald-600 ${downloading === `su_pms_${activeTab}.xlsx` ? 'animate-bounce' : ''}`} />
+              <span>{downloading === `su_pms_${activeTab}.xlsx` ? 'Downloading...' : 'Export Excel (.xlsx)'}</span>
             </button>
 
             {/* Export CSV (UTF-8 with BOM for Excel) */}
             <button
               onClick={() => triggerDownload(getTabExportUrl(activeTab, 'csv'), `su_pms_${activeTab}.csv`)}
-              className="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium px-3 py-1 rounded text-xs transition-colors flex items-center gap-1 cursor-pointer"
+              disabled={downloading === `su_pms_${activeTab}.csv`}
+              className="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium px-3 py-1 rounded text-xs transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
               title="Download UTF-8 BOM CSV that opens cleanly in Excel & Numbers"
             >
-              <Download className="h-3 w-3" />
-              <span>Export CSV</span>
+              <Download className={`h-3 w-3 ${downloading === `su_pms_${activeTab}.csv` ? 'animate-bounce' : ''}`} />
+              <span>{downloading === `su_pms_${activeTab}.csv` ? 'Downloading...' : 'Export CSV'}</span>
             </button>
 
-            {/* Download Claude Payload */}
+            {/* Download Claude Payload CSV */}
             <button
-              onClick={() => triggerDownload(getClaudeExportUrl('', 'csv'), 'claude_payload_export.csv')}
-              className="bg-slate-800 hover:bg-slate-900 text-white font-medium px-3 py-1 rounded text-xs transition-colors flex items-center gap-1 cursor-pointer"
-              title="Download Claude-optimized flat dataset for automated Slack representative tagging"
+              onClick={() => triggerDownload(getClaudeExportUrl(data?.batch_id || '', 'csv'), 'claude_payload_export.csv')}
+              disabled={downloading === 'claude_payload_export.csv'}
+              className="bg-slate-800 hover:bg-slate-900 text-white font-medium px-3 py-1 rounded text-xs transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              title="Download Claude-optimized flat dataset (CSV with BOM) for automated Slack representative tagging"
             >
-              <Download className="h-3 w-3" />
-              <span>Download Claude Payload</span>
+              <Download className={`h-3 w-3 ${downloading === 'claude_payload_export.csv' ? 'animate-bounce' : ''}`} />
+              <span>{downloading === 'claude_payload_export.csv' ? 'Downloading...' : 'Claude (CSV)'}</span>
+            </button>
+
+            {/* Download Claude Payload XLSX */}
+            <button
+              onClick={() => triggerDownload(getClaudeExportUrl(data?.batch_id || '', 'xlsx'), 'claude_payload_export.xlsx')}
+              disabled={downloading === 'claude_payload_export.xlsx'}
+              className="bg-slate-700 hover:bg-slate-800 text-slate-200 font-medium px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              title="Download Claude-optimized flat dataset in Excel format"
+            >
+              <Download className={`h-3 w-3 ${downloading === 'claude_payload_export.xlsx' ? 'animate-bounce' : ''}`} />
+              <span>{downloading === 'claude_payload_export.xlsx' ? 'Downloading...' : 'Claude (XLSX)'}</span>
             </button>
           </div>
         </div>
@@ -1173,14 +1242,13 @@ Portal Link: ${inspectItem.target_portal_url || 'not available'}`}
                       </button>
 
                       {/* Download */}
-                      <a
-                        href={getWorkspaceFileDownloadUrl(wf.path)}
-                        download={wf.name}
+                      <button
+                        onClick={() => triggerDownload(getWorkspaceFileDownloadUrl(wf.path), wf.name)}
                         className="bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 p-1.5 rounded transition-colors cursor-pointer inline-flex items-center"
                         title="Download to computer"
                       >
                         <Download className="h-3.5 w-3.5" />
-                      </a>
+                      </button>
                     </div>
                   </div>
                 );
@@ -1256,14 +1324,14 @@ Portal Link: ${inspectItem.target_portal_url || 'not available'}`}
                   Finder
                 </button>
 
-                <a
-                  href={getWorkspaceFileDownloadUrl(previewFile.file_path)}
-                  download={previewFile.file_name}
+                <button
+                  onClick={() => triggerDownload(getWorkspaceFileDownloadUrl(previewFile.file_path), previewFile.file_name)}
                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs px-2.5 py-1.5 rounded font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  title="Download file to computer"
                 >
                   <Download className="h-3 w-3" />
                   <span>Download</span>
-                </a>
+                </button>
 
                 <button
                   onClick={() => setPreviewFile(null)}
@@ -1369,6 +1437,210 @@ Portal Link: ${inspectItem.target_portal_url || 'not available'}`}
               >
                 Close Preview
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* In-App File Ingestion & Multi-Format Upload Modal */}
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6">
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setImportModalOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-5 px-6 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                  <FileUp className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Import & Reconcile Booking Files
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Upload separate SU & PMS reports or a single combined workbook. Supports .xlsx, .xls (BIFF8 corrupt-tolerant), and .csv.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setImportModalOpen(false)}
+                className="p-1.5 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {/* Dual File Upload Slots */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Slot 1: SU Report */}
+                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 hover:border-blue-300 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                      Source System (SU) Report
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">.xlsx, .csv</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                    Source bookings with Reservation ID, Source of Booking, and Admin status flags.
+                  </p>
+
+                  {modalSuFile ? (
+                    <div className="bg-white border border-blue-200 rounded-md p-2.5 flex items-center justify-between">
+                      <div className="flex items-center gap-2 truncate">
+                        <FileSpreadsheet className="h-4 w-4 text-blue-600 shrink-0" />
+                        <span className="text-xs font-medium text-slate-800 truncate" title={modalSuFile.name}>
+                          {modalSuFile.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                          ({(modalSuFile.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setModalSuFile(null)}
+                        className="text-slate-400 hover:text-red-600 p-1 transition-colors cursor-pointer"
+                        title="Remove file"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="border border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/30 rounded-md p-4 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors text-center">
+                      <Upload className="h-4 w-4 text-slate-400" />
+                      <span className="text-xs font-medium text-blue-600">Select SU File</span>
+                      <span className="text-[10px] text-slate-400">or drop file here</span>
+                      <input
+                        ref={suFileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        className="sr-only"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            setModalSuFile(e.target.files[0]);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Slot 2: PMS Report */}
+                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 hover:border-emerald-300 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                      PMS Base / 180-Day Report
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">.xls, .xlsx, .csv</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                    PMS reservations, 180-day dumps, or Base/Query sheets with booking_id/property_id.
+                  </p>
+
+                  {modalPmsFile ? (
+                    <div className="bg-white border border-emerald-200 rounded-md p-2.5 flex items-center justify-between">
+                      <div className="flex items-center gap-2 truncate">
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="text-xs font-medium text-slate-800 truncate" title={modalPmsFile.name}>
+                          {modalPmsFile.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                          ({(modalPmsFile.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setModalPmsFile(null)}
+                        className="text-slate-400 hover:text-red-600 p-1 transition-colors cursor-pointer"
+                        title="Remove file"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="border border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/30 rounded-md p-4 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors text-center">
+                      <Upload className="h-4 w-4 text-slate-400" />
+                      <span className="text-xs font-medium text-emerald-600">Select PMS File</span>
+                      <span className="text-[10px] text-slate-400">or drop file here</span>
+                      <input
+                        ref={pmsFileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        className="sr-only"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            setModalPmsFile(e.target.files[0]);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Presets / System Workspaces */}
+              <div className="border-t border-slate-200 pt-4">
+                <span className="text-xs font-semibold text-slate-700 block mb-2">
+                  Quick Workspace Presets:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    onClick={() => {
+                      handleSelectWorkspaceFile('data/ota_reservation_180day_report_1107_2026-09-24.xls');
+                      setImportModalOpen(false);
+                    }}
+                    className="p-2.5 text-left border border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/40 transition-all cursor-pointer flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="text-xs font-medium text-slate-800 block">SU + PMS 180-Day Report</span>
+                      <span className="text-[10px] text-slate-500">Auto-pairs SU bookings with 180-day PMS report</span>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleSelectWorkspaceFile('data/SU__Cancelled_Bookings.xlsx');
+                      setImportModalOpen(false);
+                    }}
+                    className="p-2.5 text-left border border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50/40 transition-all cursor-pointer flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="text-xs font-medium text-slate-800 block">Combined 3-Sheet Workbook</span>
+                      <span className="text-[10px] text-slate-500">Sheet1 (SU), query dump, Base dump</span>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+              <span className="text-xs text-slate-500">
+                {[modalSuFile, modalPmsFile].filter(Boolean).length} file(s) ready to reconcile
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setImportModalOpen(false)}
+                  className="px-4 py-1.5 rounded border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-medium cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleModalUploadSubmit}
+                  disabled={uploading || (!modalSuFile && !modalPmsFile)}
+                  className="px-5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium cursor-pointer flex items-center gap-1.5 disabled:opacity-50 transition-all shadow-xs"
+                >
+                  <RefreshCw className={`h-3 w-3 ${uploading ? 'animate-spin' : ''}`} />
+                  <span>{uploading ? 'Reconciling...' : 'Process & Reconcile'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

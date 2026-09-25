@@ -100,3 +100,44 @@ export async function triggerQuickReconcile() {
   if (!res.ok) throw new Error('Failed to run quick reconciliation');
   return res.json();
 }
+
+/**
+ * Universal browser file download helper using Blob and Object URLs.
+ * Guarantees that files download cleanly in any browser with exact filenames
+ * and proper error handling.
+ */
+export async function downloadFileFromUrl(url, defaultFilename) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    let errorDetail = `Download failed (${res.status} ${res.statusText})`;
+    try {
+      const errJson = await res.json();
+      if (errJson.detail) errorDetail = errJson.detail;
+    } catch (_) {}
+    throw new Error(errorDetail);
+  }
+
+  let filename = defaultFilename;
+  const disposition = res.headers.get('Content-Disposition') || res.headers.get('content-disposition');
+  if (disposition && disposition.includes('filename=')) {
+    const match = disposition.match(/filename=["']?([^"';]+)["']?/);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+  }
+
+  const blob = await res.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+  }, 500);
+
+  return filename;
+}

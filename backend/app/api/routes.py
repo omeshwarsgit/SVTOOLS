@@ -2,6 +2,7 @@ import os
 import io
 import csv
 import shutil
+import subprocess
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -28,7 +29,20 @@ from app.models.schemas import (
     AlertSummary,
     MISDashboardData,
 )
-from app.services.reconciler import reconcile_datasets, reconcile_mis_workbook, CHANNELS
+from app.services.parser import (
+    read_tabular_file, 
+    extract_reconciliation_dfs, 
+    detect_dataset_type,
+    clean_date,
+    clean_int,
+    normalize_channel,
+)
+from app.services.reconciler import (
+    reconcile_datasets, 
+    reconcile_mis_workbook, 
+    reconcile_uploaded_files,
+    CHANNELS,
+)
 from app.services.exporter import generate_claude_export
 from app.services.seeder import seed_master_registry
 
@@ -36,6 +50,13 @@ router = APIRouter()
 
 # In-memory cache of latest MIS state
 _LATEST_MIS_DATA: Optional[MISDashboardData] = None
+
+
+def get_user_downloads_dir() -> Path:
+    """Safely resolve user Downloads directory across any macOS/Linux environment."""
+    d = Path.home() / "Downloads"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
 
 
 @router.get("/health")
@@ -51,29 +72,26 @@ def health_check(db: Session = Depends(get_db)):
     }
 
 
-import subprocess
-
 @router.get("/files/workspace")
 def list_workspace_files():
     """List available local workbook and export files that the user can navigate, open, or select."""
     files_list = []
-    
+    seen_paths = set()
+
     # 1. Project Data dir
     if os.path.exists(settings.DATA_DIR):
         for f in sorted(os.listdir(settings.DATA_DIR)):
             if f.endswith((".xlsx", ".xls", ".csv")) and not f.startswith("~$"):
                 fp = settings.DATA_DIR / f
+                if str(fp) in seen_paths:
+                    continue
+                seen_paths.add(str(fp))
                 stat = fp.stat()
                 ext = fp.suffix.lower()
                 sheets = []
                 try:
-                    if ext == ".xlsx":
-                        wb = openpyxl.load_workbook(fp, read_only=True)
-                        sheets = wb.sheetnames
-                    elif ext == ".xls":
-                        import xlrd
-                        wb = xlrd.open_workbook(fp, on_demand=True, ignore_workbook_corruption=True)
-                        sheets = wb.sheet_names()
+                    dfs = read_tabular_file(fp, filename=f)
+                    sheets = list(dfs.keys())
                 except Exception:
                     pass
 
@@ -92,6 +110,9 @@ def list_workspace_files():
         for f in sorted(os.listdir(settings.ARCHIVES_DIR), reverse=True):
             if f.endswith((".xlsx", ".xls", ".csv")) and not f.startswith("~$"):
                 fp = settings.ARCHIVES_DIR / f
+                if str(fp) in seen_paths:
+                    continue
+                seen_paths.add(str(fp))
                 stat = fp.stat()
                 files_list.append({
                     "name": f,
@@ -104,10 +125,13 @@ def list_workspace_files():
                 })
 
     # 3. Downloads dir
-    downloads = Path("/Users/omeshwarshukla/Downloads")
+    downloads = get_user_downloads_dir()
     if downloads.exists():
         for f in downloads.glob("*.xlsx"):
             if not f.name.startswith("~$") and ("su" in f.name.lower() or "stayvista" in f.name.lower() or "ota" in f.name.lower()):
+                if str(f) in seen_paths:
+                    continue
+                seen_paths.add(str(f))
                 stat = f.stat()
                 files_list.append({
                     "name": f.name,
@@ -130,39 +154,16 @@ def preview_file(
     """
     Open and inspect any workspace file directly in the browser.
     Returns sheet list, columns, and first 100 rows.
+    Supports XLSX, corrupted XLS (via xlrd), and CSV.
     """
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
 
-    ext = Path(file_path).suffix.lower()
-    sheets = []
-    active_sheet = sheet_name
-
     try:
-        if ext == ".xlsx":
-            wb = openpyxl.load_workbook(file_path, read_only=True)
-            sheets = wb.sheetnames
-            if not active_sheet or active_sheet not in sheets:
-                active_sheet = sheets[0]
-            df = pd.read_excel(file_path, sheet_name=active_sheet, nrows=100)
-        elif ext == ".xls":
-            import xlrd
-            wb = xlrd.open_workbook(file_path, on_demand=True, ignore_workbook_corruption=True)
-            sheets = wb.sheet_names()
-            if not active_sheet or active_sheet not in sheets:
-                active_sheet = sheets[0]
-            sheet = wb.sheet_by_name(active_sheet)
-            data = [sheet.row_values(r) for r in range(min(sheet.nrows, 101))]
-            if data:
-                headers = [str(c).strip() for c in data[0]]
-                df = pd.DataFrame(data[1:], columns=headers)
-            else:
-                df = pd.DataFrame()
-        elif ext == ".csv":
-            df = pd.read_csv(file_path, nrows=100, encoding="utf-8-sig")
-            active_sheet = "CSV Data"
-        else:
-            raise HTTPException(status_code=400, detail=f"Unsupported file format: {ext}")
+        sheets_dict = read_tabular_file(file_path, filename=Path(file_path).name)
+        sheet_names = list(sheets_dict.keys())
+        active_sheet = sheet_name if sheet_name and sheet_name in sheets_dict else sheet_names[0]
+        df = sheets_dict[active_sheet].head(100)
 
         # Clean NaN values for JSON serialization
         df = df.fillna("")
@@ -172,7 +173,7 @@ def preview_file(
         return {
             "file_name": os.path.basename(file_path),
             "file_path": file_path,
-            "sheets": sheets,
+            "sheets": sheet_names,
             "active_sheet": active_sheet,
             "columns": columns,
             "rows": rows,
@@ -207,7 +208,7 @@ def open_file_in_system(
 
 @router.get("/files/download")
 def download_workspace_file(file_path: str = Query(...)):
-    """Directly download any workspace file with proper headers."""
+    """Directly download any workspace file with proper streaming headers."""
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
 
@@ -216,6 +217,8 @@ def download_workspace_file(file_path: str = Query(...)):
     media_type = "application/octet-stream"
     if ext == ".xlsx":
         media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    elif ext == ".xls":
+        media_type = "application/vnd.ms-excel"
     elif ext == ".csv":
         media_type = "text/csv; charset=utf-8"
 
@@ -225,7 +228,11 @@ def download_workspace_file(file_path: str = Query(...)):
     return Response(
         content=content,
         media_type=media_type,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": media_type,
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        }
     )
 
 
@@ -236,14 +243,14 @@ def get_latest_mis(db: Session = Depends(get_db)):
     if _LATEST_MIS_DATA is None:
         su_path = settings.DEFAULT_SU_PATH
         if not os.path.exists(su_path):
-            downloads_file = "/Users/omeshwarshukla/Downloads/SU__Cancelled_Bookings.xlsx"
+            downloads_file = get_user_downloads_dir() / "SU__Cancelled_Bookings.xlsx"
             if os.path.exists(downloads_file):
                 su_path = downloads_file
 
         if os.path.exists(su_path):
             with open(su_path, "rb") as f:
                 content = f.read()
-            _LATEST_MIS_DATA = reconcile_mis_workbook(content, db=db)
+            _LATEST_MIS_DATA = reconcile_mis_workbook(content, db=db, filename=Path(su_path).name)
         else:
             raise HTTPException(status_code=404, detail="Default workbook not found on server")
 
@@ -256,29 +263,36 @@ async def process_mis_files(
     db: Session = Depends(get_db)
 ):
     """
-    Upload one workbook with SU / Query Dump / Base Dump sheets, or separate CSV/XLSX files.
+    Ingest and reconcile one or more uploaded files:
+    - Single combined workbook with SU / Query Dump / Base Dump sheets (.xlsx, .xls)
+    - Separate SU file and PMS Base/Report files (.xlsx, .xls, .csv)
+    - Standalone CSV or XLS dumps
     """
     global _LATEST_MIS_DATA
 
     if not files:
-        raise HTTPException(status_code=400, detail="No files uploaded")
+        raise HTTPException(status_code=400, detail="No files uploaded. Please select one or more files.")
 
+    file_payloads: List[tuple[str, bytes]] = []
     for f in files:
-        if f.filename.endswith((".xlsx", ".xls", ".csv")):
+        if f.filename:
             content = await f.read()
-            try:
-                res = reconcile_mis_workbook(content, db=db)
-                _LATEST_MIS_DATA = res
-                return res
-            except Exception as e:
-                continue
+            file_payloads.append((f.filename, content))
 
-    raise HTTPException(status_code=400, detail="Could not process uploaded files. Please ensure workbook contains valid sheets.")
+    if not file_payloads:
+        raise HTTPException(status_code=400, detail="Uploaded files were empty.")
+
+    try:
+        res = reconcile_uploaded_files(file_payloads, db=db)
+        _LATEST_MIS_DATA = res
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to reconcile uploaded files: {str(e)}")
 
 
 @router.post("/mis/select-file", response_model=MISDashboardData)
 def select_file_from_workspace(file_path: str = Query(...), db: Session = Depends(get_db)):
-    """Process a selected workspace/local file directly."""
+    """Process a selected workspace/local file directly (handles single workbooks, PMS reports, CSVs, etc.)."""
     global _LATEST_MIS_DATA
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
@@ -286,17 +300,13 @@ def select_file_from_workspace(file_path: str = Query(...), db: Session = Depend
     with open(file_path, "rb") as f:
         content = f.read()
 
+    fname = Path(file_path).name
     try:
-        res = reconcile_mis_workbook(content, db=db)
+        res = reconcile_uploaded_files([(fname, content)], db=db)
         _LATEST_MIS_DATA = res
         return res
-    except ValueError as ve:
-        raise HTTPException(
-            status_code=400,
-            detail=f"This file cannot be reconciled directly ({str(ve)}). It appears to be a master registry or report file rather than a daily SU/PMS reconciliation workbook. Use 'Preview / Inspect' to view its contents."
-        )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Reconciliation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Reconciliation error for '{fname}': {str(e)}")
 
 
 @router.get("/mis/export/{tab_name}")
@@ -338,8 +348,7 @@ def export_tab_data(
     df = pd.DataFrame(rows)
     today_str = date.today().strftime("%Y%m%d")
     os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
-    downloads_dir = Path("/Users/omeshwarshukla/Downloads")
-    downloads_dir.mkdir(parents=True, exist_ok=True)
+    downloads_dir = get_user_downloads_dir()
 
     if format.lower() == "xlsx":
         filename = f"su_pms_{tab_name}_{today_str}.xlsx"
@@ -348,7 +357,6 @@ def export_tab_data(
         friendly_path = downloads_dir / f"su_pms_{tab_name}.xlsx"
 
         df.to_excel(archive_path, index=False, engine="openpyxl")
-        # Save real .xlsx Excel file directly to ~/Downloads
         try:
             shutil.copy(archive_path, downloads_path)
             shutil.copy(archive_path, friendly_path)
@@ -363,6 +371,7 @@ def export_tab_data(
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "X-Local-Path": str(archive_path),
                 "X-Downloads-Path": str(downloads_path),
                 "Access-Control-Expose-Headers": "X-Local-Path, X-Downloads-Path, Content-Disposition",
@@ -378,7 +387,6 @@ def export_tab_data(
         csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
         with open(archive_path, "wb") as f:
             f.write(csv_bytes)
-        # Save real .csv spreadsheet file directly to ~/Downloads
         try:
             shutil.copy(archive_path, downloads_path)
             shutil.copy(archive_path, friendly_path)
@@ -390,6 +398,7 @@ def export_tab_data(
             media_type="text/csv; charset=utf-8",
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "text/csv; charset=utf-8",
                 "X-Local-Path": str(archive_path),
                 "X-Downloads-Path": str(downloads_path),
                 "Access-Control-Expose-Headers": "X-Local-Path, X-Downloads-Path, Content-Disposition",
@@ -434,8 +443,7 @@ def export_and_open_excel(
 
     df = pd.DataFrame(rows)
     today_str = date.today().strftime("%Y%m%d")
-    downloads_dir = Path("/Users/omeshwarshukla/Downloads")
-    downloads_dir.mkdir(parents=True, exist_ok=True)
+    downloads_dir = get_user_downloads_dir()
     os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
 
     if format.lower() == "xlsx":
@@ -460,6 +468,7 @@ def export_and_open_excel(
         shutil.copy(archive_path, friendly_path)
 
     # Launch in Excel / macOS default spreadsheet app
+    opened = False
     try:
         subprocess.run(["open", str(downloads_path)], check=True)
         opened = True
@@ -474,7 +483,7 @@ def export_and_open_excel(
         "downloads_path": str(downloads_path),
         "friendly_path": str(friendly_path),
         "opened_in_excel": opened,
-        "message": f"Successfully created real {format.upper()} spreadsheet in ~/Downloads and opened in Excel!"
+        "message": f"Successfully created {format.upper()} in Downloads{' and opened in system spreadsheet app' if opened else ''}."
     }
 
 
@@ -486,61 +495,158 @@ def export_claude_payload(
 ):
     """
     Generate Claude-optimized flat discrepancy CSV or Excel export with immutable archival.
+    Works either from persisted DB batch or directly from live active MIS dashboard state.
     """
+    global _LATEST_MIS_DATA
     try:
-        if not batch_id:
-            latest = db.query(ReconciliationBatch).order_by(desc(ReconciliationBatch.created_at)).first()
-            if latest:
-                batch_id = latest.batch_id
-            else:
-                su_path = settings.DEFAULT_SU_PATH
-                pms_path = settings.DEFAULT_PMS_PATH
-                with open(su_path, "rb") as f_su, open(pms_path, "rb") as f_pms:
-                    r = reconcile_datasets(f_su.read(), f_pms.read(), db=db)
-                    batch_id = r["batch_id"]
+        # 1. Try DB export if batch exists in DB
+        db_batch = None
+        if batch_id:
+            db_batch = db.query(ReconciliationBatch).filter(ReconciliationBatch.batch_id == batch_id).first()
+        else:
+            db_batch = db.query(ReconciliationBatch).order_by(desc(ReconciliationBatch.created_at)).first()
 
-        content, filename, archive_path = generate_claude_export(batch_id, db, format=format)
-        downloads_dir = Path("/Users/omeshwarshukla/Downloads")
-        downloads_dir.mkdir(parents=True, exist_ok=True)
-        downloads_path = downloads_dir / filename
+        if db_batch:
+            content, filename, archive_path = generate_claude_export(db_batch.batch_id, db, format=format)
+            downloads_dir = get_user_downloads_dir()
+            downloads_path = downloads_dir / filename
 
-        # Copy directly to ~/Downloads
-        try:
+            try:
+                if format.lower() == "xlsx":
+                    with open(downloads_path, "wb") as f_out:
+                        f_out.write(content)
+                else:
+                    with open(downloads_path, "w", encoding="utf-8-sig") as f_out:
+                        f_out.write(content if isinstance(content, str) else content.decode("utf-8-sig", errors="ignore"))
+            except Exception:
+                pass
+
             if format.lower() == "xlsx":
-                with open(downloads_path, "wb") as f_out:
-                    f_out.write(content)
+                return Response(
+                    content=content,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="{filename}"',
+                        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "X-Archive-Path": str(archive_path),
+                        "X-Downloads-Path": str(downloads_path),
+                        "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
+                    }
+                )
             else:
-                with open(downloads_path, "w", encoding="utf-8-sig") as f_out:
-                    f_out.write(content if isinstance(content, str) else content.decode("utf-8-sig", errors="ignore"))
-        except Exception:
-            pass
+                csv_bytes = content.encode("utf-8-sig") if isinstance(content, str) else content
+                return Response(
+                    content=csv_bytes,
+                    media_type="text/csv; charset=utf-8",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="{filename}"',
+                        "Content-Type": "text/csv; charset=utf-8",
+                        "X-Archive-Path": str(archive_path),
+                        "X-Downloads-Path": str(downloads_path),
+                        "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
+                    }
+                )
+
+        # 2. Fallback: Generate directly from active MIS dashboard state
+        if _LATEST_MIS_DATA is None:
+            get_latest_mis(db)
+
+        rows = []
+        disc_id = 1
+        tabs_to_include = [
+            ("cancellation_pending", "IN_TRANSIT_CANCELLATION", "Confirmed"),
+            ("confirmed_su_cancelled_pms", "STATUS_MISMATCH", "Confirmed"),
+            ("missing_in_pms", "MISSING_IN_PMS", "Unknown"),
+            ("missing_in_su", "MISSING_IN_SU", "Unknown"),
+            ("pms_special_status", "SPECIAL_STATUS", "Tentative/No-show"),
+            ("base_vs_query_mismatch", "QUERY_MISMATCH", "Mismatch"),
+            ("query_not_in_base", "QUERY_NOT_IN_BASE", "Missing"),
+        ]
+
+        seen_keys = set()
+        for tab_key, disc_type, default_status in tabs_to_include:
+            items = _LATEST_MIS_DATA.tabs_data.get(tab_key, [])
+            for it in items:
+                dedup_key = (it.reservation_id, disc_type)
+                if dedup_key in seen_keys:
+                    continue
+                seen_keys.add(dedup_key)
+
+                t_url = it.target_portal_url or "not available"
+                if t_url.count("http") > 1:
+                    parts = t_url.split("http")
+                    t_url = "http" + parts[1]
+
+                rows.append({
+                    "Discrepancy_ID": disc_id,
+                    "Reservation_ID": it.reservation_id,
+                    "Channel": it.channel,
+                    "Status_Category": it.su_status or default_status,
+                    "Discrepancy_Type": disc_type,
+                    "Property_ID": it.property_id or "",
+                    "Property_Name": it.property_name or "Unknown Property",
+                    "Assigned_Representative": it.assigned_representative or "Unassigned",
+                    "Target_Portal_URL": t_url,
+                    "Guest_Name": it.guest_name or "Unknown Guest",
+                    "Check_In_Date": it.check_in or "",
+                    "Check_Out_Date": it.check_out or "",
+                })
+                disc_id += 1
+
+        df = pd.DataFrame(rows)
+        today_str = date.today().strftime("%Y-%m-%d")
+        b_id = batch_id or _LATEST_MIS_DATA.batch_id
+        downloads_dir = get_user_downloads_dir()
+        os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
 
         if format.lower() == "xlsx":
+            filename = f"claude_payload_{today_str}_{b_id}.xlsx"
+            archive_path = settings.ARCHIVES_DIR / filename
+            downloads_path = downloads_dir / filename
+            df.to_excel(archive_path, index=False, engine="openpyxl")
+            try:
+                shutil.copy(archive_path, downloads_path)
+            except Exception:
+                pass
+            with open(archive_path, "rb") as f:
+                content_bytes = f.read()
+
             return Response(
-                content=content,
+                content=content_bytes,
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 headers={
                     "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     "X-Archive-Path": str(archive_path),
                     "X-Downloads-Path": str(downloads_path),
                     "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
                 }
             )
         else:
-            # UTF-8 with BOM
-            csv_bytes = content.encode("utf-8-sig") if isinstance(content, str) else content
+            filename = f"claude_payload_{today_str}_{b_id}.csv"
+            archive_path = settings.ARCHIVES_DIR / filename
+            downloads_path = downloads_dir / filename
+            csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
+            with open(archive_path, "wb") as f:
+                f.write(csv_bytes)
+            try:
+                shutil.copy(archive_path, downloads_path)
+            except Exception:
+                pass
+
             return Response(
                 content=csv_bytes,
                 media_type="text/csv; charset=utf-8",
                 headers={
                     "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Content-Type": "text/csv; charset=utf-8",
                     "X-Archive-Path": str(archive_path),
                     "X-Downloads-Path": str(downloads_path),
                     "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
                 }
             )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Claude export failed: {str(e)}")
 
 
 @router.post("/reconcile/quick")
@@ -548,5 +654,5 @@ def quick_reconcile(db: Session = Depends(get_db)):
     global _LATEST_MIS_DATA
     su_path = settings.DEFAULT_SU_PATH
     with open(su_path, "rb") as f:
-        _LATEST_MIS_DATA = reconcile_mis_workbook(f.read(), db=db)
+        _LATEST_MIS_DATA = reconcile_mis_workbook(f.read(), db=db, filename=Path(su_path).name)
     return _LATEST_MIS_DATA
