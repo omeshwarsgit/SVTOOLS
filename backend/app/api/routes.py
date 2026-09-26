@@ -1,3 +1,4 @@
+import sys
 import os
 import io
 import csv
@@ -321,9 +322,12 @@ def export_tab_data(
     """
     global _LATEST_MIS_DATA
     if _LATEST_MIS_DATA is None:
-        get_latest_mis(db)
+        try:
+            _LATEST_MIS_DATA = get_latest_mis(refresh=False, db=db)
+        except Exception:
+            pass
 
-    items = _LATEST_MIS_DATA.tabs_data.get(tab_name, [])
+    items = _LATEST_MIS_DATA.tabs_data.get(tab_name, []) if _LATEST_MIS_DATA and _LATEST_MIS_DATA.tabs_data else []
 
     rows = []
     for it in items:
@@ -347,24 +351,22 @@ def export_tab_data(
 
     df = pd.DataFrame(rows)
     today_str = date.today().strftime("%Y%m%d")
-    os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
-    downloads_dir = get_user_downloads_dir()
 
     if format.lower() == "xlsx":
         filename = f"su_pms_{tab_name}_{today_str}.xlsx"
-        archive_path = settings.ARCHIVES_DIR / filename
-        downloads_path = downloads_dir / filename
-        friendly_path = downloads_dir / f"su_pms_{tab_name}.xlsx"
+        out_excel = io.BytesIO()
+        df.to_excel(out_excel, index=False, engine="openpyxl")
+        excel_bytes = out_excel.getvalue()
 
-        df.to_excel(archive_path, index=False, engine="openpyxl")
+        # Try optional local cache if filesystem writable
         try:
+            archive_path = settings.ARCHIVES_DIR / filename
+            with open(archive_path, "wb") as f:
+                f.write(excel_bytes)
+            downloads_path = get_user_downloads_dir() / filename
             shutil.copy(archive_path, downloads_path)
-            shutil.copy(archive_path, friendly_path)
         except Exception:
             pass
-
-        with open(archive_path, "rb") as f:
-            excel_bytes = f.read()
 
         return Response(
             content=excel_bytes,
@@ -372,24 +374,20 @@ def export_tab_data(
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "X-Local-Path": str(archive_path),
-                "X-Downloads-Path": str(downloads_path),
-                "Access-Control-Expose-Headers": "X-Local-Path, X-Downloads-Path, Content-Disposition",
+                "Access-Control-Expose-Headers": "Content-Disposition",
             }
         )
     else:
         filename = f"su_pms_{tab_name}_{today_str}.csv"
-        archive_path = settings.ARCHIVES_DIR / filename
-        downloads_path = downloads_dir / filename
-        friendly_path = downloads_dir / f"su_pms_{tab_name}.csv"
-
-        # UTF-8 with BOM (utf-8-sig) ensures Excel opens without error
+        # UTF-8 with BOM (utf-8-sig) ensures Excel on Mac and Windows opens without error
         csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
-        with open(archive_path, "wb") as f:
-            f.write(csv_bytes)
+
         try:
+            archive_path = settings.ARCHIVES_DIR / filename
+            with open(archive_path, "wb") as f:
+                f.write(csv_bytes)
+            downloads_path = get_user_downloads_dir() / filename
             shutil.copy(archive_path, downloads_path)
-            shutil.copy(archive_path, friendly_path)
         except Exception:
             pass
 
@@ -399,9 +397,7 @@ def export_tab_data(
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "text/csv; charset=utf-8",
-                "X-Local-Path": str(archive_path),
-                "X-Downloads-Path": str(downloads_path),
-                "Access-Control-Expose-Headers": "X-Local-Path, X-Downloads-Path, Content-Disposition",
+                "Access-Control-Expose-Headers": "Content-Disposition",
             }
         )
 
@@ -418,9 +414,12 @@ def export_and_open_excel(
     """
     global _LATEST_MIS_DATA
     if _LATEST_MIS_DATA is None:
-        get_latest_mis(db)
+        try:
+            _LATEST_MIS_DATA = get_latest_mis(refresh=False, db=db)
+        except Exception:
+            pass
 
-    items = _LATEST_MIS_DATA.tabs_data.get(tab_name, [])
+    items = _LATEST_MIS_DATA.tabs_data.get(tab_name, []) if _LATEST_MIS_DATA and _LATEST_MIS_DATA.tabs_data else []
     rows = []
     for it in items:
         rows.append({
@@ -444,7 +443,11 @@ def export_and_open_excel(
     df = pd.DataFrame(rows)
     today_str = date.today().strftime("%Y%m%d")
     downloads_dir = get_user_downloads_dir()
-    os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
+    
+    try:
+        os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
+    except Exception:
+        pass
 
     if format.lower() == "xlsx":
         filename = f"su_pms_{tab_name}_{today_str}.xlsx"
@@ -452,26 +455,39 @@ def export_and_open_excel(
         downloads_path = downloads_dir / filename
         friendly_path = downloads_dir / f"su_pms_{tab_name}.xlsx"
 
-        df.to_excel(archive_path, index=False, engine="openpyxl")
-        shutil.copy(archive_path, downloads_path)
-        shutil.copy(archive_path, friendly_path)
+        try:
+            df.to_excel(archive_path, index=False, engine="openpyxl")
+            shutil.copy(archive_path, downloads_path)
+            shutil.copy(archive_path, friendly_path)
+        except Exception:
+            pass
     else:
         filename = f"su_pms_{tab_name}_{today_str}.csv"
         archive_path = settings.ARCHIVES_DIR / filename
         downloads_path = downloads_dir / filename
         friendly_path = downloads_dir / f"su_pms_{tab_name}.csv"
 
-        csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
-        with open(archive_path, "wb") as f:
-            f.write(csv_bytes)
-        shutil.copy(archive_path, downloads_path)
-        shutil.copy(archive_path, friendly_path)
+        try:
+            csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
+            with open(archive_path, "wb") as f:
+                f.write(csv_bytes)
+            shutil.copy(archive_path, downloads_path)
+            shutil.copy(archive_path, friendly_path)
+        except Exception:
+            pass
 
-    # Launch in Excel / macOS default spreadsheet app
+    # Launch in system spreadsheet app (macOS / Windows / Linux)
     opened = False
     try:
-        subprocess.run(["open", str(downloads_path)], check=True)
-        opened = True
+        if sys.platform == "darwin":
+            subprocess.run(["open", str(downloads_path)], check=True)
+            opened = True
+        elif sys.platform == "win32":
+            os.startfile(str(downloads_path))
+            opened = True
+        else:
+            subprocess.run(["xdg-open", str(downloads_path)], check=True)
+            opened = True
     except Exception:
         opened = False
 
@@ -483,7 +499,7 @@ def export_and_open_excel(
         "downloads_path": str(downloads_path),
         "friendly_path": str(friendly_path),
         "opened_in_excel": opened,
-        "message": f"Successfully created {format.upper()} in Downloads{' and opened in system spreadsheet app' if opened else ''}."
+        "message": f"Successfully created {format.upper()}{' and opened in system spreadsheet app' if opened else ''}."
     }
 
 
@@ -508,29 +524,15 @@ def export_claude_payload(
 
         if db_batch:
             content, filename, archive_path = generate_claude_export(db_batch.batch_id, db, format=format)
-            downloads_dir = get_user_downloads_dir()
-            downloads_path = downloads_dir / filename
-
-            try:
-                if format.lower() == "xlsx":
-                    with open(downloads_path, "wb") as f_out:
-                        f_out.write(content)
-                else:
-                    with open(downloads_path, "w", encoding="utf-8-sig") as f_out:
-                        f_out.write(content if isinstance(content, str) else content.decode("utf-8-sig", errors="ignore"))
-            except Exception:
-                pass
-
             if format.lower() == "xlsx":
+                content_bytes = content if isinstance(content, bytes) else content.encode("utf-8")
                 return Response(
-                    content=content,
+                    content=content_bytes,
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={
                         "Content-Disposition": f'attachment; filename="{filename}"',
                         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        "X-Archive-Path": str(archive_path),
-                        "X-Downloads-Path": str(downloads_path),
-                        "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
+                        "Access-Control-Expose-Headers": "Content-Disposition",
                     }
                 )
             else:
@@ -541,15 +543,16 @@ def export_claude_payload(
                     headers={
                         "Content-Disposition": f'attachment; filename="{filename}"',
                         "Content-Type": "text/csv; charset=utf-8",
-                        "X-Archive-Path": str(archive_path),
-                        "X-Downloads-Path": str(downloads_path),
-                        "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
+                        "Access-Control-Expose-Headers": "Content-Disposition",
                     }
                 )
 
         # 2. Fallback: Generate directly from active MIS dashboard state
         if _LATEST_MIS_DATA is None:
-            get_latest_mis(db)
+            try:
+                _LATEST_MIS_DATA = get_latest_mis(refresh=False, db=db)
+            except Exception:
+                pass
 
         rows = []
         disc_id = 1
@@ -596,41 +599,37 @@ def export_claude_payload(
         df = pd.DataFrame(rows)
         today_str = date.today().strftime("%Y-%m-%d")
         b_id = batch_id or _LATEST_MIS_DATA.batch_id
-        downloads_dir = get_user_downloads_dir()
-        os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
 
         if format.lower() == "xlsx":
             filename = f"claude_payload_{today_str}_{b_id}.xlsx"
-            archive_path = settings.ARCHIVES_DIR / filename
-            downloads_path = downloads_dir / filename
-            df.to_excel(archive_path, index=False, engine="openpyxl")
+            out_excel = io.BytesIO()
+            df.to_excel(out_excel, index=False, engine="openpyxl")
+            excel_bytes = out_excel.getvalue()
+
             try:
-                shutil.copy(archive_path, downloads_path)
+                archive_path = settings.ARCHIVES_DIR / filename
+                with open(archive_path, "wb") as f:
+                    f.write(excel_bytes)
             except Exception:
                 pass
-            with open(archive_path, "rb") as f:
-                content_bytes = f.read()
 
             return Response(
-                content=content_bytes,
+                content=excel_bytes,
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 headers={
                     "Content-Disposition": f'attachment; filename="{filename}"',
                     "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    "X-Archive-Path": str(archive_path),
-                    "X-Downloads-Path": str(downloads_path),
-                    "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
+                    "Access-Control-Expose-Headers": "Content-Disposition",
                 }
             )
         else:
             filename = f"claude_payload_{today_str}_{b_id}.csv"
-            archive_path = settings.ARCHIVES_DIR / filename
-            downloads_path = downloads_dir / filename
             csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
-            with open(archive_path, "wb") as f:
-                f.write(csv_bytes)
+
             try:
-                shutil.copy(archive_path, downloads_path)
+                archive_path = settings.ARCHIVES_DIR / filename
+                with open(archive_path, "wb") as f:
+                    f.write(csv_bytes)
             except Exception:
                 pass
 
@@ -640,9 +639,7 @@ def export_claude_payload(
                 headers={
                     "Content-Disposition": f'attachment; filename="{filename}"',
                     "Content-Type": "text/csv; charset=utf-8",
-                    "X-Archive-Path": str(archive_path),
-                    "X-Downloads-Path": str(downloads_path),
-                    "Access-Control-Expose-Headers": "X-Archive-Path, X-Downloads-Path, Content-Disposition",
+                    "Access-Control-Expose-Headers": "Content-Disposition",
                 }
             )
     except Exception as e:
@@ -656,3 +653,159 @@ def quick_reconcile(db: Session = Depends(get_db)):
     with open(su_path, "rb") as f:
         _LATEST_MIS_DATA = reconcile_mis_workbook(f.read(), db=db, filename=Path(su_path).name)
     return _LATEST_MIS_DATA
+
+
+# =====================================================================
+# Automation & Office Email Dispatch Endpoints
+# =====================================================================
+
+from pydantic import BaseModel
+
+class AutomationEmailRequest(BaseModel):
+    recipients: Optional[List[str]] = None
+    subject: Optional[str] = None
+
+class AutomationTestEmailRequest(BaseModel):
+    recipient_email: str
+
+
+@router.get("/automation/status")
+def get_automation_status():
+    """Check configuration status of free office email and incoming folder watcher."""
+    from app.services.email_service import parse_recipient_list
+    
+    smtp_user = settings.SMTP_USER or ""
+    smtp_configured = bool(smtp_user and settings.SMTP_PASSWORD)
+    recipients = parse_recipient_list(settings.RECIPIENT_EMAILS)
+
+    # Mask sender email for UI safety
+    masked_user = "Not configured"
+    if smtp_user and "@" in smtp_user:
+        u_parts = smtp_user.split("@")
+        name_part = u_parts[0]
+        masked_user = f"{name_part[:3]}***@{u_parts[1]}" if len(name_part) > 3 else f"***@{u_parts[1]}"
+
+    # Check incoming watch folder
+    watch_dir = settings.WATCH_FOLDER
+    incoming_files = []
+    if watch_dir.exists():
+        incoming_files = [
+            f.name for f in watch_dir.iterdir()
+            if f.is_file() and not f.name.startswith((".", "~$"))
+        ]
+
+    # Check processed history
+    proc_dir = settings.PROCESSED_FOLDER
+    processed_batches = []
+    if proc_dir.exists():
+        processed_batches = sorted([d.name for d in proc_dir.iterdir() if d.is_dir()], reverse=True)[:5]
+
+    slack_webhook = (settings.SLACK_WEBHOOK_URL or "").strip()
+    slack_configured = bool(slack_webhook)
+
+    return {
+        "status": "active",
+        "smtp_configured": smtp_configured,
+        "smtp_host": settings.SMTP_HOST,
+        "smtp_port": settings.SMTP_PORT,
+        "sender_account": masked_user,
+        "sender_name": settings.SMTP_FROM_NAME,
+        "recipients": recipients,
+        "recipient_count": len(recipients),
+        "slack_configured": slack_configured,
+        "slack_channel": settings.SLACK_CHANNEL,
+        "watch_folder": str(watch_dir),
+        "incoming_files": incoming_files,
+        "incoming_count": len(incoming_files),
+        "processed_batches": processed_batches,
+    }
+
+
+@router.post("/automation/test-email")
+def trigger_test_email(req: AutomationTestEmailRequest):
+    """Send a test email to verify office SMTP credentials without executing full reconciliation."""
+    from app.services.email_service import send_test_email
+    res = send_test_email(req.recipient_email)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return res
+
+
+@router.post("/automation/slack-test")
+def trigger_slack_test():
+    """Send a test ping to the configured Slack webhook channel."""
+    from app.services.slack_service import send_slack_test_ping
+    res = send_slack_test_ping()
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return res
+
+
+@router.post("/automation/slack-send")
+def trigger_slack_send(db: Session = Depends(get_db)):
+    """Post an executive MIS reconciliation alert to the configured Slack channel."""
+    global _LATEST_MIS_DATA
+    from app.services.slack_service import send_slack_alert
+
+    if _LATEST_MIS_DATA is None:
+        try:
+            _LATEST_MIS_DATA = get_latest_mis(refresh=False, db=db)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"No reconciliation data to post to Slack: {str(e)}")
+
+    res = send_slack_alert(mis_data=_LATEST_MIS_DATA)
+    return res
+
+
+@router.post("/automation/send-email")
+def trigger_send_email(
+    req: Optional[AutomationEmailRequest] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate the executive multi-sheet Excel workbook and dispatch email report
+    for the latest active reconciliation state.
+    """
+    global _LATEST_MIS_DATA
+    from app.services.email_service import send_reconciliation_email
+
+    if _LATEST_MIS_DATA is None:
+        try:
+            _LATEST_MIS_DATA = get_latest_mis(refresh=False, db=db)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"No reconciliation data available to email: {str(e)}")
+
+    recips = req.recipients if req and req.recipients else None
+    subj = req.subject if req and req.subject else None
+
+    result = send_reconciliation_email(
+        mis_data=_LATEST_MIS_DATA,
+        recipient_emails=recips,
+        custom_subject=subj,
+        dry_run_if_no_smtp=True
+    )
+    return result
+
+
+@router.post("/automation/trigger")
+def trigger_automated_reconciliation(
+    req: Optional[AutomationEmailRequest] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Execute complete automated ingestion of incoming sheets (or default sheets)
+    and dispatch emails to everyone immediately.
+    """
+    global _LATEST_MIS_DATA
+    from app.services.automation_service import run_reconciliation_and_dispatch
+
+    recips = req.recipients if req and req.recipients else None
+    try:
+        res = run_reconciliation_and_dispatch(
+            recipient_emails=recips,
+            send_email=True,
+            db=db
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Automated reconciliation failed: {str(e)}")

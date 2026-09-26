@@ -47,6 +47,10 @@ pnpm-debug.log*
 *.sqlite3
 backend/reconciliation.db-shm
 backend/reconciliation.db-wal
+archives/emails/
+archives/slack/
+data/incoming/
+data/processed/
 
 # Environment Variables & Secrets
 .env
@@ -59,3 +63,5 @@ backend/reconciliation.db-wal
 .idea/
 *.swp
 *.swo
+.vercel
+.env*

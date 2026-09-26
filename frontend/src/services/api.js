@@ -142,3 +142,70 @@ export async function downloadFileFromUrl(url, defaultFilename) {
 
   return filename;
 }
+
+export async function fetchAutomationStatus() {
+  const res = await fetch(`${API_BASE}/automation/status`);
+  if (!res.ok) throw new Error('Failed to fetch automation status');
+  return res.json();
+}
+
+export async function triggerAutomationSendEmail(payload = {}) {
+  const res = await fetch(`${API_BASE}/automation/send-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to send email' }));
+    throw new Error(err.detail || 'Failed to send email');
+  }
+  return res.json();
+}
+
+export async function triggerAutomationTestEmail(recipientEmail) {
+  const res = await fetch(`${API_BASE}/automation/test-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ recipient_email: recipientEmail }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to send test email' }));
+    throw new Error(err.detail || 'Failed to send test email');
+  }
+  return res.json();
+}
+
+export async function triggerAutomatedReconciliation(payload = {}) {
+  const res = await fetch(`${API_BASE}/automation/trigger`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Automation failed' }));
+    throw new Error(err.detail || 'Automation failed');
+  }
+  return res.json();
+}
+
+export async function triggerSlackTest() {
+  const res = await fetch(`${API_BASE}/automation/slack-test`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Slack test failed' }));
+    throw new Error(err.detail || 'Slack test failed');
+  }
+  return res.json();
+}
+
+export async function triggerSlackSend() {
+  const res = await fetch(`${API_BASE}/automation/slack-send`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to post alert to Slack' }));
+    throw new Error(err.detail || 'Failed to post alert to Slack');
+  }
+  return res.json();
+}

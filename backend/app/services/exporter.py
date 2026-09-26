@@ -52,14 +52,16 @@ def generate_claude_export(batch_id: str, db: Session, format: str = "csv") -> T
 
     df = pd.DataFrame(rows)
 
-    # 1. Save immutable physical CSV copy with UTF-8 BOM to /archives/exports/
-    os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
+    # 1. Attempt to save physical archival copy if filesystem allows
     today_str = date.today().strftime("%Y-%m-%d")
     archive_filename = f"claude_payload_{today_str}_{batch_id}.csv"
     archive_path = settings.ARCHIVES_DIR / archive_filename
 
-    # UTF-8 with BOM (utf-8-sig) ensures Excel on Mac and Windows opens the file without error
-    df.to_csv(archive_path, index=False, encoding="utf-8-sig")
+    try:
+        os.makedirs(settings.ARCHIVES_DIR, exist_ok=True)
+        df.to_csv(archive_path, index=False, encoding="utf-8-sig")
+    except Exception:
+        pass
 
     if format.lower() == "xlsx":
         out_excel = io.BytesIO()
@@ -68,6 +70,6 @@ def generate_claude_export(batch_id: str, db: Session, format: str = "csv") -> T
         excel_filename = f"claude_payload_{today_str}_{batch_id}.xlsx"
         return excel_bytes, excel_filename, archive_path
     else:
-        with open(archive_path, "r", encoding="utf-8-sig") as f:
-            csv_content = f.read()
+        # Generate clean CSV with UTF-8 BOM in-memory
+        csv_content = df.to_csv(index=False, encoding="utf-8-sig")
         return csv_content, archive_filename, archive_path

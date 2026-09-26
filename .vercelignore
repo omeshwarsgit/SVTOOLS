@@ -1,0 +1,9 @@
+.git
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+frontend/node_modules/
+backend/reconciliation.db-shm
+backend/reconciliation.db-wal

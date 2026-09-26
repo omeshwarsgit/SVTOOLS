@@ -36,8 +36,10 @@ import {
   Upload,
   FileUp,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Mail
 } from 'lucide-react';
+import EmailAutomationModal from './components/EmailAutomationModal';
 
 const TABS = [
   { key: 'cancellation_pending', label: 'Cancellation Pending', badge: 14 },
@@ -69,6 +71,7 @@ export default function App() {
 
   // File Ingestion Modal States
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [modalSuFile, setModalSuFile] = useState(null);
   const [modalPmsFile, setModalPmsFile] = useState(null);
 
@@ -248,6 +251,57 @@ export default function App() {
     }
   };
 
+  // Client-side CSV generator fallback (guarantees instantaneous zero-server download)
+  const exportCsvClientFallback = (tabName, filename) => {
+    const items = data?.tabs_data?.[tabName] || [];
+    if (!items.length) return false;
+    const headers = [
+      "Reservation_ID", "Vendor_Booking_ID", "Guest_Name", "Channel",
+      "SU_Status", "PMS_Status", "Admin_Status", "Property_ID",
+      "Property_Name", "Assigned_Representative", "Target_Portal_URL",
+      "Check_In", "Check_Out", "Match_Type", "Notes"
+    ];
+    const escapeCsv = (val) => {
+      const s = (val ?? '').toString();
+      if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+    const rows = [headers.join(',')];
+    items.forEach(it => {
+      rows.push([
+        escapeCsv(it.reservation_id),
+        escapeCsv(it.vendor_booking_id),
+        escapeCsv(it.guest_name),
+        escapeCsv(it.channel),
+        escapeCsv(it.su_status),
+        escapeCsv(it.pms_status),
+        escapeCsv(it.admin_status),
+        escapeCsv(it.property_id),
+        escapeCsv(it.property_name),
+        escapeCsv(it.assigned_representative),
+        escapeCsv(it.target_portal_url),
+        escapeCsv(it.check_in),
+        escapeCsv(it.check_out),
+        escapeCsv(it.match_type),
+        escapeCsv(it.notes),
+      ].join(','));
+    });
+    const blob = new Blob(["\uFEFF" + rows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || `su_pms_${tabName}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }, 500);
+    return true;
+  };
+
   // Safe file download helper: streams binary data via Blob & triggers native browser file download
   const triggerDownload = async (url, defaultFilename) => {
     try {
@@ -263,8 +317,14 @@ export default function App() {
       });
       refreshWorkspaceFilesList();
     } catch (err) {
-      console.error('Download error:', err);
-      showToast(`Download failed: ${err.message}`);
+      console.warn('Server download endpoint failed, attempting browser client export fallback:', err);
+      const csvFallbackFilename = defaultFilename.endsWith('.xlsx') ? defaultFilename.replace('.xlsx', '.csv') : defaultFilename;
+      const success = exportCsvClientFallback(activeTab, csvFallbackFilename);
+      if (success) {
+        showToast(`Downloaded '${csvFallbackFilename}' cleanly to your device!`);
+      } else {
+        showToast(`Download failed: ${err.message}`);
+      }
     } finally {
       setDownloading(null);
     }
@@ -455,6 +515,16 @@ export default function App() {
             >
               <FileUp className="h-3.5 w-3.5" />
               <span>Import Bookings</span>
+            </button>
+
+            {/* Email Automation & Watcher Modal */}
+            <button
+              onClick={() => setEmailModalOpen(true)}
+              className="border border-indigo-200 hover:border-indigo-300 bg-indigo-50/80 hover:bg-indigo-100/90 text-indigo-700 text-xs font-medium px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98"
+              title="Automated Office Email & Folder Watcher Settings"
+            >
+              <Mail className="h-3.5 w-3.5 text-indigo-600" />
+              <span>Automated Email & Watcher</span>
             </button>
 
             {/* Native OS File Picker trigger */}
@@ -1645,6 +1715,14 @@ Portal Link: ${inspectItem.target_portal_url || 'not available'}`}
           </div>
         </div>
       )}
+
+      {/* Automated Office Email & Watcher Modal */}
+      <EmailAutomationModal
+        isOpen={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        onRefreshData={loadData}
+        showToast={showToast}
+      />
     </div>
   );
 }
