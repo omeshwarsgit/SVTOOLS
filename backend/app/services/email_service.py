@@ -484,7 +484,8 @@ def save_dry_run_email(
     html_body: str,
     excel_bytes: bytes,
     batch_id: str,
-    reason: str = "Dry run mode / SMTP credentials not configured"
+    reason: str = "Dry run mode / SMTP credentials not configured",
+    cc_recipients: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """
     When SMTP is not configured or in office dry-run mode, safely archive
@@ -507,6 +508,7 @@ def save_dry_run_email(
         "status": "dry_run_saved",
         "message": f"Office email report generated and archived successfully ({reason}).",
         "recipients": recipients,
+        "cc_recipients": cc_recipients or [],
         "subject": subject,
         "html_preview_path": str(html_path),
         "excel_attachment_path": str(excel_path),
@@ -517,21 +519,28 @@ def save_dry_run_email(
 def send_reconciliation_email(
     mis_data: MISDashboardData,
     recipient_emails: Optional[List[str]] = None,
+    cc_emails: Optional[List[str]] = None,
     custom_subject: Optional[str] = None,
     dry_run_if_no_smtp: bool = True
 ) -> Dict[str, Any]:
     """
     Send the comprehensive StayVista MIS Reconciliation Report and Excel attachment
-    to the configured team/office recipient list.
+    to the configured team/office recipient list and CC recipients.
     
     - Uses free standard SMTP (Office 365, Google Workspace, or custom corporate SMTP).
     - Never uses user's personal email.
-    - If SMTP is not yet configured, cleanly archives the report in dry_run mode so no errors occur.
+    - Preserves earlier configured recipients in RECIPIENT_EMAILS if none provided.
+    - Delivers to both To and Cc recipients via SMTP envelope.
     """
     # 1. Resolve recipients
     recipients = parse_recipient_list(recipient_emails)
     if not recipients:
         recipients = parse_recipient_list(settings.RECIPIENT_EMAILS)
+
+    # 1b. Resolve CC recipients (deduplicated against primary recipients)
+    ccs = parse_recipient_list(cc_emails)
+    recip_lower = {r.lower() for r in recipients}
+    ccs = [c for c in ccs if c.lower() not in recip_lower]
 
     # 2. Build Excel Attachment & HTML Body
     excel_bytes = generate_styled_excel_report(mis_data)
@@ -556,6 +565,7 @@ def send_reconciliation_email(
             return save_dry_run_email(
                 subject=subject,
                 recipients=recipients,
+                cc_recipients=ccs,
                 html_body=html_body,
                 excel_bytes=excel_bytes,
                 batch_id=mis_data.batch_id,
@@ -566,11 +576,12 @@ def send_reconciliation_email(
                 "Office email credentials not configured! Please configure SMTP_USER and SMTP_PASSWORD in .env"
             )
 
-    if not recipients:
+    if not recipients and not ccs:
         return {
             "status": "warning",
             "message": "No recipient emails provided. Please specify RECIPIENT_EMAILS in .env or via API.",
             "recipients": [],
+            "cc_recipients": [],
             "subject": subject
         }
 
@@ -578,7 +589,10 @@ def send_reconciliation_email(
     msg = MIMEMultipart("mixed")
     msg["Subject"] = subject
     msg["From"] = f"{from_name} <{smtp_user}>"
-    msg["To"] = ", ".join(recipients)
+    if recipients:
+        msg["To"] = ", ".join(recipients)
+    if ccs:
+        msg["Cc"] = ", ".join(ccs)
 
     # HTML Part
     msg_html = MIMEText(html_body, "html", "utf-8")
@@ -591,6 +605,9 @@ def send_reconciliation_email(
     msg.attach(part_excel)
 
     # 5. Connect to SMTP server and transmit
+    # Combined delivery list for SMTP envelope
+    all_deliver_to = list(dict.fromkeys(recipients + ccs))
+
     try:
         # Support TLS (port 587) or SSL (port 465)
         if smtp_port == 465:
@@ -603,23 +620,26 @@ def send_reconciliation_email(
                 server.ehlo()
 
         server.login(smtp_user, smtp_pass)
-        server.sendmail(smtp_user, recipients, msg.as_string())
+        server.sendmail(smtp_user, all_deliver_to, msg.as_string())
         server.quit()
 
         # Archive sent copy for audit
         save_dry_run_email(
             subject=subject,
             recipients=recipients,
+            cc_recipients=ccs,
             html_body=html_body,
             excel_bytes=excel_bytes,
             batch_id=mis_data.batch_id,
             reason="Sent successfully via SMTP"
         )
 
+        cc_msg = f" and {len(ccs)} CC recipient(s)" if ccs else ""
         return {
             "status": "success",
-            "message": f"Successfully sent reconciliation report to {len(recipients)} recipient(s).",
+            "message": f"Successfully sent reconciliation report to {len(recipients)} recipient(s){cc_msg}.",
             "recipients": recipients,
+            "cc_recipients": ccs,
             "subject": subject,
             "batch_id": mis_data.batch_id,
             "attachment_name": excel_filename,
@@ -631,6 +651,7 @@ def send_reconciliation_email(
         save_dry_run_email(
             subject=subject,
             recipients=recipients,
+            cc_recipients=ccs,
             html_body=html_body,
             excel_bytes=excel_bytes,
             batch_id=mis_data.batch_id,
@@ -640,6 +661,7 @@ def send_reconciliation_email(
             "status": "error",
             "message": f"Failed to send email via SMTP ({smtp_host}:{smtp_port}): {str(e)}",
             "recipients": recipients,
+            "cc_recipients": ccs,
             "subject": subject
         }
 

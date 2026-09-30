@@ -32,6 +32,7 @@ def run_reconciliation_and_dispatch(
     files: Optional[List[Tuple[str, bytes]]] = None,
     file_paths: Optional[List[Union[str, Path]]] = None,
     recipient_emails: Optional[List[str]] = None,
+    cc_emails: Optional[List[str]] = None,
     send_email: bool = True,
     db: Optional[Session] = None
 ) -> Dict[str, Any]:
@@ -74,6 +75,7 @@ def run_reconciliation_and_dispatch(
             email_result = send_reconciliation_email(
                 mis_data=mis_data,
                 recipient_emails=recipient_emails,
+                cc_emails=cc_emails,
                 dry_run_if_no_smtp=True
             )
 

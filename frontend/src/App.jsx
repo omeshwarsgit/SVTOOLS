@@ -39,7 +39,9 @@ import {
   Trash2,
   AlertCircle,
   Mail,
-  MessageSquare
+  MessageSquare,
+  ChevronDown,
+  Send
 } from 'lucide-react';
 import EmailAutomationModal from './components/EmailAutomationModal';
 
@@ -83,6 +85,19 @@ export default function App() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewSearch, setPreviewSearch] = useState('');
   const [postingSlack, setPostingSlack] = useState(false);
+  const [dispatchDropdownOpen, setDispatchDropdownOpen] = useState(false);
+  const dispatchDropdownRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dispatchDropdownRef.current && !dispatchDropdownRef.current.contains(event.target)) {
+        setDispatchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fileInputRef = useRef(null);
   const suFileInputRef = useRef(null);
@@ -558,26 +573,74 @@ export default function App() {
               <span>Import Bookings</span>
             </button>
 
-            {/* Forward & Email Report Modal */}
-            <button
-              onClick={() => setEmailModalOpen(true)}
-              className="border border-indigo-200 hover:border-indigo-300 bg-indigo-50/80 hover:bg-indigo-100/90 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98"
-              title="Forward reconciliation report via email or view automation settings"
-            >
-              <Mail className="h-3.5 w-3.5 text-indigo-600" />
-              <span>Forward Report</span>
-            </button>
+            {/* Unified Dispatch Dropdown: Post on Slack or Email */}
+            <div className="relative" ref={dispatchDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setDispatchDropdownOpen(!dispatchDropdownOpen)}
+                className="border border-indigo-300 hover:border-indigo-400 bg-indigo-50/90 hover:bg-indigo-100 text-indigo-900 text-xs font-semibold px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98"
+                title="Post on Slack or Email report"
+              >
+                <Send className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Post on Slack or Email</span>
+                <ChevronDown className={`h-3 w-3 text-indigo-600 transition-transform ${dispatchDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-            {/* Post Discrepancies to Slack */}
-            <button
-              onClick={handlePostSlack}
-              disabled={postingSlack}
-              className="border border-purple-200 hover:border-purple-300 bg-purple-50/80 hover:bg-purple-100/90 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98 disabled:opacity-50"
-              title="Post live discrepancies and cancellation alerts to Slack"
-            >
-              {postingSlack ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="h-3.5 w-3.5 text-purple-600" />}
-              <span>Post to Slack</span>
-            </button>
+              {dispatchDropdownOpen && (
+                <div className="absolute left-0 sm:left-auto sm:right-0 mt-1.5 w-72 bg-white rounded-lg shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="px-3 py-1 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Select Dispatch Method
+                  </div>
+
+                  {/* Option 1: Email Report */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDispatchDropdownOpen(false);
+                      setEmailModalOpen(true);
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-blue-50/80 flex items-start gap-2.5 transition-colors cursor-pointer group"
+                  >
+                    <div className="p-1.5 bg-blue-100 text-blue-700 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-colors mt-0.5 shrink-0">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-slate-800 flex items-center justify-between">
+                        <span>Send Email Report</span>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-medium">To + CC</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        Multi-sheet Excel workbook with To & CC options
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Post on Slack */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDispatchDropdownOpen(false);
+                      handlePostSlack();
+                    }}
+                    disabled={postingSlack}
+                    className="w-full px-3 py-2 text-left hover:bg-purple-50/80 flex items-start gap-2.5 transition-colors cursor-pointer group disabled:opacity-50"
+                  >
+                    <div className="p-1.5 bg-purple-100 text-purple-700 rounded-md group-hover:bg-purple-600 group-hover:text-white transition-colors mt-0.5 shrink-0">
+                      {postingSlack ? <RefreshCw className="h-4 w-4 animate-spin text-purple-700" /> : <MessageSquare className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-slate-800 flex items-center justify-between">
+                        <span>Post on Slack</span>
+                        <span className="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-medium">Channel</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        Broadcast live KPI metrics & @RM tags to Slack
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Native OS File Picker trigger */}
             <label 

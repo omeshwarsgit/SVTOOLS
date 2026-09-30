@@ -199,9 +199,11 @@ export async function triggerSlackTest() {
   return res.json();
 }
 
-export async function triggerSlackSend() {
+export async function triggerSlackSend(payload = {}) {
   const res = await fetch(`${API_BASE}/automation/slack-send`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Failed to post alert to Slack' }));

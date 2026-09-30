@@ -663,7 +663,11 @@ from pydantic import BaseModel
 
 class AutomationEmailRequest(BaseModel):
     recipients: Optional[List[str]] = None
+    cc_recipients: Optional[List[str]] = None
     subject: Optional[str] = None
+
+class AutomationSlackRequest(BaseModel):
+    webhook_url: Optional[str] = None
 
 class AutomationTestEmailRequest(BaseModel):
     recipient_email: str
@@ -742,7 +746,10 @@ def trigger_slack_test():
 
 
 @router.post("/automation/slack-send")
-def trigger_slack_send(db: Session = Depends(get_db)):
+def trigger_slack_send(
+    req: Optional[AutomationSlackRequest] = None,
+    db: Session = Depends(get_db)
+):
     """Post an executive MIS reconciliation alert to the configured Slack channel."""
     global _LATEST_MIS_DATA
     from app.services.slack_service import send_slack_alert
@@ -753,7 +760,8 @@ def trigger_slack_send(db: Session = Depends(get_db)):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"No reconciliation data to post to Slack: {str(e)}")
 
-    res = send_slack_alert(mis_data=_LATEST_MIS_DATA)
+    webhook = req.webhook_url if req and req.webhook_url else None
+    res = send_slack_alert(mis_data=_LATEST_MIS_DATA, webhook_url=webhook)
     return res
 
 
@@ -776,11 +784,13 @@ def trigger_send_email(
             raise HTTPException(status_code=400, detail=f"No reconciliation data available to email: {str(e)}")
 
     recips = req.recipients if req and req.recipients else None
+    cc_recips = req.cc_recipients if req and req.cc_recipients else None
     subj = req.subject if req and req.subject else None
 
     result = send_reconciliation_email(
         mis_data=_LATEST_MIS_DATA,
         recipient_emails=recips,
+        cc_emails=cc_recips,
         custom_subject=subj,
         dry_run_if_no_smtp=True
     )
