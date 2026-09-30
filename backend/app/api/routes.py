@@ -681,6 +681,7 @@ def get_automation_status():
     smtp_user = settings.SMTP_USER or ""
     smtp_configured = bool(smtp_user and settings.SMTP_PASSWORD)
     recipients = parse_recipient_list(settings.RECIPIENT_EMAILS)
+    cc_recipients = parse_recipient_list(settings.CC_EMAILS)
 
     # Mask sender email for UI safety
     masked_user = "Not configured"
@@ -716,6 +717,8 @@ def get_automation_status():
         "sender_name": settings.SMTP_FROM_NAME,
         "recipients": recipients,
         "recipient_count": len(recipients),
+        "cc_recipients": cc_recipients,
+        "cc_recipient_count": len(cc_recipients),
         "slack_configured": slack_configured,
         "slack_channel": settings.SLACK_CHANNEL,
         "watch_folder": str(watch_dir),

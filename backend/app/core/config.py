@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "StayVista Reconciliation Engine"
     SMTP_USE_TLS: bool = True
     RECIPIENT_EMAILS: str = ""  # Comma-separated list of recipient emails: "ops@stayvista.com, team@stayvista.com"
+    CC_EMAILS: str = ""  # Comma-separated list of CC emails: "manager@stayvista.com"
 
     # Slack Integration Configuration (Free Incoming Webhook or Channel Email)
     SLACK_WEBHOOK_URL: str = ""

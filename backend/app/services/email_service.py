@@ -539,6 +539,8 @@ def send_reconciliation_email(
 
     # 1b. Resolve CC recipients (deduplicated against primary recipients)
     ccs = parse_recipient_list(cc_emails)
+    if not ccs:
+        ccs = parse_recipient_list(settings.CC_EMAILS)
     recip_lower = {r.lower() for r in recipients}
     ccs = [c for c in ccs if c.lower() not in recip_lower]
 

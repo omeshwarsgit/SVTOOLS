@@ -45,10 +45,22 @@ export default function EmailAutomationModal({
   const [testingEmail, setTestingEmail] = useState(false);
   const [triggeringIngest, setTriggeringIngest] = useState(false);
 
+  const DEFAULT_PRIMARY = [
+    'omeshwar.shukla@stayvista.co.in',
+    'bcomreservations@stayvista.com'
+  ];
+
+  const DEFAULT_CC = [
+    'megha.prasad@stayvista.com',
+    'kushal.pandey@stayvista.com',
+    'krutika.naik@stayvista.com',
+    'shubhangi.sharma@stayvista.co.in'
+  ];
+
   // Primary "To" and Secondary "Cc"
-  const [recipients, setRecipients] = useState([]);
-  const [ccRecipients, setCcRecipients] = useState([]);
-  const [showCcSection, setShowCcSection] = useState(false);
+  const [recipients, setRecipients] = useState(DEFAULT_PRIMARY);
+  const [ccRecipients, setCcRecipients] = useState(DEFAULT_CC);
+  const [showCcSection, setShowCcSection] = useState(true);
 
   const [newRecipientInput, setNewRecipientInput] = useState('');
   const [newCcInput, setNewCcInput] = useState('');
@@ -72,6 +84,10 @@ export default function EmailAutomationModal({
       // Pre-load the earlier provided recipients into the primary "To" list
       if (res.recipients && res.recipients.length > 0) {
         setRecipients((prev) => (prev.length === 0 ? res.recipients : prev));
+      }
+      // Pre-load CC recipients if returned by backend
+      if (res.cc_recipients && res.cc_recipients.length > 0) {
+        setCcRecipients((prev) => (prev.length === 0 ? res.cc_recipients : prev));
       }
     } catch (err) {
       console.error('Failed to load automation status:', err);
