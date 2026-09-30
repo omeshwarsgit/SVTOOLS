@@ -134,7 +134,10 @@ export default function App() {
         showToast(`Ingesting and reconciling ${files.length} file(s)...`);
         const res = await processMISFiles(files);
         setData(res);
-        showToast(`Ingested & reconciled ${files.length} file(s) successfully! (${res.primary_metrics?.total_bookings || 0} bookings)`);
+        showToast(`Ingested & reconciled ${files.length} file(s) successfully! (${res.primary_metrics?.total_bookings || 0} bookings)`, {
+          forwardEmail: () => setEmailModalOpen(true),
+          preview: files[0] ? () => handleOpenFilePreview(files[0].name) : undefined
+        });
         refreshWorkspaceFilesList();
       } catch (err) {
         showToast(`Upload error: ${err.message}`);
@@ -166,7 +169,9 @@ export default function App() {
       setImportModalOpen(false);
       setModalSuFile(null);
       setModalPmsFile(null);
-      showToast(`Successfully reconciled ${filesToUpload.length} file(s)! (${res.primary_metrics?.total_bookings || 0} bookings)`);
+      showToast(`Successfully reconciled ${filesToUpload.length} file(s)! (${res.primary_metrics?.total_bookings || 0} bookings)`, {
+        forwardEmail: () => setEmailModalOpen(true)
+      });
       refreshWorkspaceFilesList();
     } catch (err) {
       showToast(`Ingestion error: ${err.message}`);
@@ -200,6 +205,7 @@ export default function App() {
       setData(res);
       const fname = filePath.split('/').pop();
       showToast(`Loaded & reconciled '${fname}'!`, {
+        forwardEmail: () => setEmailModalOpen(true),
         openMac: () => handleOpenSystem(filePath, 'open'),
         revealFinder: () => handleOpenSystem(filePath, 'reveal'),
         preview: () => handleOpenFilePreview(filePath)
@@ -218,17 +224,23 @@ export default function App() {
       if (selectedFiles.length > 0) {
         const res = await processMISFiles(selectedFiles);
         setData(res);
-        showToast('Workbook processed and published successfully!');
+        showToast('Workbook processed and published successfully!', {
+          forwardEmail: () => setEmailModalOpen(true)
+        });
         setSelectedFiles([]);
         refreshWorkspaceFilesList();
       } else if (selectedWorkspaceFile) {
         const res = await selectWorkspaceFile(selectedWorkspaceFile);
         setData(res);
-        showToast(`Workspace file '${selectedWorkspaceFile.split('/').pop()}' processed!`);
+        showToast(`Workspace file '${selectedWorkspaceFile.split('/').pop()}' processed!`, {
+          forwardEmail: () => setEmailModalOpen(true)
+        });
       } else {
         const res = await fetchLatestMIS(true);
         setData(res);
-        showToast('Latest daily report re-processed and published!');
+        showToast('Latest daily report re-processed and published!', {
+          forwardEmail: () => setEmailModalOpen(true)
+        });
       }
     } catch (err) {
       showToast(`Error: ${err.message}`);
@@ -449,6 +461,15 @@ export default function App() {
           </div>
           {toast.actions && (
             <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center gap-2 flex-wrap">
+              {toast.actions.forwardEmail && (
+                <button
+                  onClick={toast.actions.forwardEmail}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition-colors inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                >
+                  <Mail className="h-3 w-3" />
+                  Forward / Email Report
+                </button>
+              )}
               {toast.actions.openMac && (
                 <button
                   onClick={toast.actions.openMac}
@@ -1722,6 +1743,7 @@ Portal Link: ${inspectItem.target_portal_url || 'not available'}`}
         onClose={() => setEmailModalOpen(false)}
         onRefreshData={loadData}
         showToast={showToast}
+        currentBatchData={data}
       />
     </div>
   );
