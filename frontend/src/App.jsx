@@ -10,7 +10,8 @@ import {
   getWorkspaceFileDownloadUrl, 
   getTabExportUrl, 
   getClaudeExportUrl,
-  downloadFileFromUrl 
+  downloadFileFromUrl,
+  triggerSlackSend
 } from './services/api';
 import { 
   Search, 
@@ -37,7 +38,8 @@ import {
   FileUp,
   Trash2,
   AlertCircle,
-  Mail
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 import EmailAutomationModal from './components/EmailAutomationModal';
 
@@ -80,6 +82,7 @@ export default function App() {
   const [previewFile, setPreviewFile] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewSearch, setPreviewSearch] = useState('');
+  const [postingSlack, setPostingSlack] = useState(false);
 
   const fileInputRef = useRef(null);
   const suFileInputRef = useRef(null);
@@ -260,6 +263,23 @@ export default function App() {
       refreshWorkspaceFilesList();
     } catch (err) {
       showToast(`Error opening in Excel: ${err.message}`);
+    }
+  };
+
+  const handlePostSlack = async () => {
+    try {
+      setPostingSlack(true);
+      showToast('Posting live discrepancies to Slack...');
+      const res = await triggerSlackSend();
+      if (res.status === 'success') {
+        showToast('Live alert posted to your Slack channel successfully!');
+      } else {
+        showToast(res.message || 'Slack alert processed');
+      }
+    } catch (err) {
+      showToast(`Slack alert error: ${err.message}`);
+    } finally {
+      setPostingSlack(false);
     }
   };
 
@@ -538,14 +558,25 @@ export default function App() {
               <span>Import Bookings</span>
             </button>
 
-            {/* Email Automation & Watcher Modal */}
+            {/* Forward & Email Report Modal */}
             <button
               onClick={() => setEmailModalOpen(true)}
-              className="border border-indigo-200 hover:border-indigo-300 bg-indigo-50/80 hover:bg-indigo-100/90 text-indigo-700 text-xs font-medium px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98"
-              title="Automated Office Email & Folder Watcher Settings"
+              className="border border-indigo-200 hover:border-indigo-300 bg-indigo-50/80 hover:bg-indigo-100/90 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98"
+              title="Forward reconciliation report via email or view automation settings"
             >
               <Mail className="h-3.5 w-3.5 text-indigo-600" />
-              <span>Automated Email & Watcher</span>
+              <span>Forward Report</span>
+            </button>
+
+            {/* Post Discrepancies to Slack */}
+            <button
+              onClick={handlePostSlack}
+              disabled={postingSlack}
+              className="border border-purple-200 hover:border-purple-300 bg-purple-50/80 hover:bg-purple-100/90 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-98 disabled:opacity-50"
+              title="Post live discrepancies and cancellation alerts to Slack"
+            >
+              {postingSlack ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="h-3.5 w-3.5 text-purple-600" />}
+              <span>Post to Slack</span>
             </button>
 
             {/* Native OS File Picker trigger */}

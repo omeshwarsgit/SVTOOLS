@@ -401,6 +401,43 @@ export default function EmailAutomationModal({
             </button>
           </div>
 
+          {/* Slack Dispatch Section */}
+          <div className="bg-purple-50/80 border border-purple-200 rounded-lg p-3.5 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5 uppercase tracking-wide">
+                <Send className="h-3.5 w-3.5 text-purple-600" />
+                <span>Slack Alert Broadcast:</span>
+              </span>
+              <span className="text-[11px] text-purple-700 font-mono">
+                Channel: {statusData?.slack_channel || '#reconciliation-alerts'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleSendSlackNow}
+                disabled={sendingSlack}
+                className="bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer active:scale-98"
+              >
+                {sendingSlack ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                <span>Post Discrepancies to Slack Now</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTestSlack}
+                disabled={testingSlack}
+                className="bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 text-xs font-medium px-3 py-2 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              >
+                {testingSlack ? <RefreshCw className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                <span>Test Slack Webhook</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-purple-800 leading-relaxed pt-1 border-t border-purple-200/60">
+              💡 <strong>Instant Alert:</strong> Posts the latest cancellation alerts, matched counts, and tags Relationship Managers directly in your Slack channel.
+            </p>
+          </div>
+
           {/* Test Single Email Connection Row */}
           <div className="pt-2 border-t border-slate-200 flex items-center gap-2">
             <input
